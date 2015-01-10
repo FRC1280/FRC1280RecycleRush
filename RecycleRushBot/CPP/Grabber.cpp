@@ -1,77 +1,77 @@
-#include "../H/Transmission.h"
+#include "../H/Grabber.h"
 
 //------------------------------------------------------------------------------
-// METHOD:  Transmission::Transmission()
+// METHOD:  Grabber::Grabber()
 // Type:	Constructor
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-Transmission::Transmission(uint tranChannel)
+Grabber::Grabber(uint grabberChannel)
 {
 
-	pGear = new Solenoid(tranChannel);
+	pGrabberSolenoid = new Solenoid(grabberChannel);
 
-	ShiftLow();
+	MoveOut();
 }
 //------------------------------------------------------------------------------
-// METHOD:  Transmission::~Transmission()
+// METHOD:  Grabber::~Grabber()
 // Type:	Destructor
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-Transmission::~Transmission()
+Grabber::~Grabber()
 {
 	// Does nothing
 }
 //------------------------------------------------------------------------------
-// METHOD:  Transmission::ShiftHigh()
+// METHOD:  Grabber::MoveIn()
 // Type:	Method
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void  Transmission::ShiftGear(int gearSpeed)
+void  Grabber::ToggleGrabber(int grabberPosition)
 {
-	if(gearSpeed == kHighSpeed)
-		ShiftHigh();
-	else if(gearSpeed == kLowSpeed)
-		ShiftLow();
+	if(grabberPosition == kGrabberIn)
+		MoveIn();
+	else if(grabberPosition == kGrabberOut)
+		MoveOut();
 
 	return;
 }
 //------------------------------------------------------------------------------
-// METHOD:  Transmission::ShiftHigh()
+// METHOD:  Grabber::MoveIn()
 // Type:	Method
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void  Transmission::ShiftHigh()
+void  Grabber::MoveIn()
 {
-	pGear->Set(true);
-	gearStatus = kHighSpeed;
+	pGrabberSolenoid->Set(true);
+	grabberPos = kGrabberIn;
 
 	return;
 }
 //------------------------------------------------------------------------------
-// METHOD:  Transmission::ShiftLow()
-// Type:	Constructor
+// METHOD:  Grabber::MoveOut()
+// Type:	Method
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void  Transmission::ShiftLow()
+void  Grabber::MoveOut()
 {
-	pGear->Set(false);
+	pGrabberSolenoid->Set(false);
 
-	gearStatus = kLowSpeed;
+	grabberPos = kGrabberOut;
 
 	return;
 }
 //------------------------------------------------------------------------------
-// METHOD:  Transmission::GetGear()
-// Type:	Constructor
+// METHOD:  Grabber::GetPosition()
+// Type:	GET
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-int   Transmission::GetGear()
+int   Grabber::GetPosition()
 {
-	return gearStatus;
+	return grabberPos;
 }

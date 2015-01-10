@@ -7,10 +7,10 @@
 #include <cmath>
 
 #include "../H/CameraLights.h"
-#include "../H/TankDrive.h"
-#include "../H/Transmission.h"
+#include "../H/Grabber.h"
 
 #define CONSOLE
+
 //------------------------------------------------------------------------------
 // DEFINE RecycleRushRobot CLASS
 //------------------------------------------------------------------------------
@@ -74,17 +74,12 @@ class RecycleRushRobot : public IterativeRobot
 		// DRIVER STATION PORTS AND CHANNELS
 		//----------------------------------------------------------------------
 		// Driver Station Joystick ports
-		static const uint LEFT_JS_PORT          =  1;
-		static const uint RIGHT_JS_PORT         =  0;
-		static const uint CCI_PORT              =  3;  // eStop Robots CCI Inputs
+		static const uint JS_PORT          =  1;
+		static const uint CCI_PORT         =  3;  // eStop Robots CCI Inputs
 
 		// Driver Station CCI Channels (Uses joystick button references)
-		static const uint LED_LIGHTS_CH            =   1;
-
-		// Joystick Buttons
-		static const uint TRAN_LOW_SPEED_BT        =  2;
-		static const uint TRAN_HIGH_SPEED_BT       =  3;
-		static const uint TRAN_GRANNY_BT		     =  8;
+		static const uint LED_LIGHTS_SW_CH            =   1;
+		static const uint GRABBER_SW_CH			   =   2;
 
 		//----------------------------------------------------------------------
 		// ROBOT CHANNELS - INPUTS AND OUTPUTS
@@ -97,12 +92,6 @@ class RecycleRushRobot : public IterativeRobot
 		static const uint PRESSURE_SW_CH         =  1;
 		// Autonomous Mode switches
 
-		// Wheel Encoders
-		static const uint LEFT_ENCODER_CHA	   =  7;
-		static const uint LEFT_ENCODER_CHB	   =  8;
-		static const uint RIGHT_ENCODER_CHA	   =  9;
-		static const uint RIGHT_ENCODER_CHB	   = 10;
-
 		// cRIO Analog Breakout Input - Banner Sensors
 		// Robot inputs
 		// Banner Sensors for elevator, loader and shooter positions
@@ -111,7 +100,7 @@ class RecycleRushRobot : public IterativeRobot
 		// Motors with Victor & Talon speed controllers
 		// PWM = Pulsed width modulation
 		static const uint RIGHT_REAR_MOTOR_CH	   = 1;
-		static const uint RIGHT_FRONT_MOTOR_CH   = 2;
+		static const uint RIGHT_FRONT_MOTOR_CH     = 2;
 		static const uint LEFT_REAR_MOTOR_CH	   = 3;
 		static const uint LEFT_FRONT_MOTOR_CH	   = 4;
 
@@ -120,7 +109,7 @@ class RecycleRushRobot : public IterativeRobot
 		static const uint CAMERA_LIGHTS_CH      =  2;
 
 		// cRIO Solenoid Breakout Channels
-		static const uint TRANSMISSION		  =  2;
+		static const uint GRABBER_CH			=  0;
 
 		//----------------------------------------------------------------------
 		// CONSTANTS USED TO DETERMINE STATUS OF DRIVER STATION AND ROBOT INPUTS
@@ -129,12 +118,6 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		// CONSTANTS USED IN DECLARING OBJECTS
 		//----------------------------------------------------------------------
-		// Encoder Values
-		static const bool   ENCODER_NORMAL_DIR   = false;
-		static const bool   ENCODER_REVERSE_DIR  = true;
-		constexpr static const double WHEEL_DIST_PER_PULSE = 0.052;
-		// Transmission constants
-		static const int    GRANNY_GEAR          = 0;
 
 		//----------------------------------------------------------------------
 		// AUTONOMOUS MODE ROBOT CONTROL CONSTANTS (OUTPUTS)
@@ -155,19 +138,10 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		DriverStation	 *pDriverStation;
 
-		// Joysticks
-		Joystick		 *pRightStick;			// joystick 1 (right tank stick)
-		Joystick		 *pLeftStick;	        // joystick 2 (left tank stick)
-		JoystickButton   *pHighSpeedRightBt;    // Joystick buttons
-		JoystickButton   *pHighSpeedLeftBt;
-		JoystickButton   *pLowSpeedRightBt;
-		JoystickButton   *pLowSpeedLeftBt;
-		JoystickButton   *pGrannyRightBt;
-		JoystickButton   *pGrannyLeftBt;
-
 		// eStop Robotics Custom Control Interface (CCI)
 		Joystick         *pCCI;                 // CCI
 		JoystickButton	 *pCameraLightSwitch;   // CCI Digital Inputs
+		JoystickButton	 *pGrabberSwitch;
 
 		//----------------------------------------------------------------------
 		// ROBOT INPUT & OUTPUT POINTERS
@@ -184,8 +158,8 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		// Robot Objects
 		//----------------------------------------------------------------------
-		TankDrive		*pDriveMotors;
-
+		RobotDrive		*pDriverTrain;
+		Grabber 		*pGrabber;
 		//----------------------------------------------------------------------
 		// VARIABLES USED IN CLASS
 		//----------------------------------------------------------------------
@@ -206,7 +180,8 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		// Camera Switches
 		bool   lightsOn;
-		// Disk Shooter Switches
+		// Robot Switches
+		bool   grabberIn;
 
 
 		//----------------------------------------------------------------------
@@ -228,9 +203,9 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		
 		//----------------------------------------------------------------------
-		// Transmission Speed / Shifting
+		// Grabber Speed / Shifting
 		//----------------------------------------------------------------------
-		int    tranSpeed;            // Transmission speed
+		int    tranSpeed;            // Grabber speed
 
 		//----------------------------------------------------------------------
 		// Autonomous Mode Switches & variables
@@ -264,20 +239,14 @@ RecycleRushRobot::RecycleRushRobot()
 	pDriverStation = DriverStation::GetInstance();
 
 	// Define joysticks & CCI
-	pRightStick		     = new Joystick(RIGHT_JS_PORT);
-	pLeftStick			 = new Joystick(LEFT_JS_PORT);
+	pDriveStick			 = new Joystick(JS_PORT);
 	pCCI                 = new Joystick(CCI_PORT); // CCI uses joystick object
 
     // Joystick Buttons
-	pHighSpeedRightBt    = new JoystickButton(pRightStick,TRAN_HIGH_SPEED_BT);
-	pHighSpeedLeftBt     = new JoystickButton(pLeftStick,TRAN_HIGH_SPEED_BT);
-	pLowSpeedRightBt     = new JoystickButton(pRightStick,TRAN_LOW_SPEED_BT);
-	pLowSpeedLeftBt      = new JoystickButton(pLeftStick,TRAN_LOW_SPEED_BT);
-	pGrannyRightBt       = new JoystickButton(pRightStick,TRAN_GRANNY_BT);
-	pGrannyLeftBt        = new JoystickButton(pLeftStick,TRAN_GRANNY_BT);
 
 	// CCI Switches
-	pCameraLightSwitch   = new JoystickButton(pCCI,LED_LIGHTS_CH);
+	pCameraLightSwitch   = new JoystickButton(pCCI,LED_LIGHTS_SW_CH);
+	pGrabberSwitch		 = new JoystickButton(pCCI,GRABBER_SW_CH);
 
 	//----------------------------------------------------------------------
 	// ROBOT INPUTS
@@ -293,10 +262,10 @@ RecycleRushRobot::RecycleRushRobot()
 	pCameraLights		 = new CameraLights(CAMERA_LIGHTS_CH);
 
 	// Drive Train
-	pDriveMotors		 = new TankDrive(RIGHT_REAR_MOTOR_CH,RIGHT_FRONT_MOTOR_CH,
-										 LEFT_REAR_MOTOR_CH,LEFT_FRONT_MOTOR_CH,
-										 LEFT_ENCODER_CHA, LEFT_ENCODER_CHB,
-										 RIGHT_ENCODER_CHA,RIGHT_ENCODER_CHB);
+	pDriveTrain		     = new RobotDrive(RIGHT_REAR_MOTOR_CH,RIGHT_FRONT_MOTOR_CH,
+									      LEFT_REAR_MOTOR_CH,LEFT_FRONT_MOTOR_CH);
+
+	pGrabber 			 = new Grabber(GRABBER_CH);
 
 	
 	//----------------------------------------------------------------------
@@ -325,26 +294,15 @@ RecycleRushRobot::~RecycleRushRobot()
 //	        powered on.
 //------------------------------------------------------------------------------
 // Functions:
-// DKE Review these to ensure they are in the right method.  Some
-//     seem like they could be moved to AutonomousInit() or
-//     TeleopInit().
 // - Initializes the SmartDashboard
 // - Turns air compressor on
-// - Shifts robot transmission into low gear
 // - Sets type of input used to determine elevator position
 // - Sets target values for three preset elevator positions
-// - Sets target values for three preset disk loader positions
 // - Initializes robot status tracking settings
-// - Sets distance per pulse for wheel encoders used for driving
-// - Sets formula values to translate aim angle from driver station
-//   POT setting to banner sensor setting (DKE - Don't we need to initialize
-//   the banner sensor count for the default starting position?)
 //------------------------------------------------------------------------------
 void RecycleRushRobot::RobotInit()
 {
 	SmartDashboard::init();
-
-	pDriveMotors->SetDistancePerPulse(WHEEL_DIST_PER_PULSE);
 
 	return;
 }
@@ -377,7 +335,7 @@ void RecycleRushRobot::DisabledInit()
 // - Resets the loop counter for autonomous mode
 // - Resets the AutoState
 // - Resets the encoders on the wheels that measure distance traveled.
-// - Shifts the transmission into low gear
+// - Shifts the Grabber into low gear
 // - Optionally prints the status of the autonomous mode switches for debugging
 //   purposes
 //------------------------------------------------------------------------------
@@ -391,12 +349,7 @@ void RecycleRushRobot::AutonomousInit()
 	startSec   = (int)GetClock();
 	
 	GetRobotSensorInput();
-	
-
-	pDriveMotors->ResetWheelEncoders();
-	
-	tranSpeed = Transmission::kLowSpeed;
-
+		
 	return;
 }
 //------------------------------------------------------------------------------
@@ -422,9 +375,6 @@ void RecycleRushRobot::TeleopInit()
 
 	GetDriverStationInput();
 	GetRobotSensorInput();
-
-	tranSpeed = Transmission::kLowSpeed;
-	pDriveMotors->ResetWheelEncoders();
 
 	return;
 }
@@ -496,8 +446,8 @@ void RecycleRushRobot::AutonomousPeriodic()
 // - Feeds to watchdog to prevent robot shut-down
 // - Obtains input from the driver station (joystick inputs, switches, arm
 //   rotator potentiometer)
-// - If a transmission shift was requested by the driver station, shift
-//   transmission
+// - If a Grabber shift was requested by the driver station, shift
+//   Grabber
 // - Sets the drive motor values based on joystick movement
 // - Sets the ball launcher motor speed values based on on/off switch and
 //   potentiometer position
@@ -517,11 +467,8 @@ void RecycleRushRobot::TeleopPeriodic()
 	// Get robot sensor input
 	GetRobotSensorInput();
 
-	SmartDashboard::PutNumber("tranSpeed", tranSpeed);
-	SmartDashboard::PutNumber("LeftDriveSpeed", leftDriveSpeed);
-
 	//Set Drive Speed
-	pDriveMotors->SetDriveMotors(tranSpeed, leftDriveSpeed, rightDriveSpeed);
+	pDriveTrain->MechanumDrive_Cartesian(pDriveStick->GetX(), pDriveStick->GetY(), pDriveStick->GetTwist());
 
 
 	// Turn camera LED lights on or off
@@ -529,6 +476,11 @@ void RecycleRushRobot::TeleopPeriodic()
 		pCameraLights->TurnOn();
 	else
 		pCameraLights->TurnOff();
+
+	if ( grabberIn )
+		pGrabber->ToggleGrabber(Grabber::kGrabberIn);
+	else
+		pGrabber->ToggleGrabber(Grabber::kGrabberOut);
 
 #ifdef CONSOLE
 	// Display SmartDashboard Values
@@ -546,7 +498,7 @@ void RecycleRushRobot::TeleopPeriodic()
 // - Ball Launcher Motor On (SPSD fitch)
 // May also need to include reading additional switches depending on where
 // functions are included on the robot or driver station.
-// - Transmission High/Low speed (SPST switch)
+// - Grabber High/Low speed (SPST switch)
 // Include also:
 // - Reading joystick functions (left and right)
 // - Reading arm rotation potentiometer (analog input)
@@ -556,36 +508,11 @@ void RecycleRushRobot::TeleopPeriodic()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::GetDriverStationInput()
 {
-	if ( pHighSpeedLeftBt->Get() &&
-	        pHighSpeedRightBt->Get() )
-	{
-	    	tranSpeed = Transmission::kHighSpeed;
-	}
-	else
-	{
-		if ( pLowSpeedLeftBt->Get() &&
-				pLowSpeedRightBt->Get() )
-		{
-			tranSpeed  = Transmission::kLowSpeed;
-		}
-		else if ( pGrannyLeftBt->Get() ||
-				pGrannyRightBt->Get() )
-		{
-			tranSpeed  = GRANNY_GEAR;
-		}
-	}
-
-	// Joystick Drive Values
-	leftDriveSpeed  = pLeftStick->GetY();
-	rightDriveSpeed = pRightStick->GetY();
-
 
 	// Obtain the position of switches on the driver station
 	// Camera Switches
     lightsOn  				 = pCameraLightSwitch->Get();
-
-
-
+    grabberIn				 = pGrabberSwitch->Get();
 
     ShowDSValues();
 
@@ -601,15 +528,9 @@ void RecycleRushRobot::ShowDSValues()
 {
 // Show the values for driver station inputs
 
-	// Show Joystick Buttons for Shifting
-	SmartDashboard::PutBoolean("Right JS Button 3",pHighSpeedRightBt->Get());
-	SmartDashboard::PutBoolean("Left JS Button 3",pHighSpeedLeftBt->Get());
-	SmartDashboard::PutBoolean("Left JS Button 2",pLowSpeedLeftBt->Get());
-	SmartDashboard::PutBoolean("Right JS Button 2",pLowSpeedRightBt->Get());
-	SmartDashboard::PutBoolean("Right JS Button 8",pGrannyRightBt->Get());
-	SmartDashboard::PutBoolean("Left JS Button 8",pGrannyLeftBt->Get());
-
     // Camera Light Switch Value
+	SmartDashboard::PutBoolean("Camera Lights",LightsOn;
+	SmartDashboard::PutBoolean("Grabber In",grabberIn);
 
 	return;
 }
@@ -660,14 +581,12 @@ void RecycleRushRobot::GetAutoModeSwitches()
 // METHOD:  RecycleRushRobot::GetTime()
 // Type:	Public accessor for RecycleRushRobot class
 //------------------------------------------------------------------------------
-// Shifts gear on transmission to match input from driver station.  Gear shifts
+// Shifts gear on Grabber to match input from driver station.  Gear shifts
 // are via a pneumatic cylinder controlled by a solenoid.
 //------------------------------------------------------------------------------
 int RecycleRushRobot::GetTime()
 {
-	int  currentTime;
-
-	currentTime = (int)GetClock();
+	int currentTime = (int)GetClock();
 
 	return currentTime;
 }
@@ -687,7 +606,7 @@ void RecycleRushRobot::RunAutonomousMode()
 // METHOD:  RecycleRushRobot::ShowAMStatus()
 // Type:	Public accessor for RecycleRushRobot class
 //------------------------------------------------------------------------------
-// Shifts gear on transmission to match input from driver station.  Gear shifts
+// Shifts gear on Grabber to match input from driver station.  Gear shifts
 // are via a pneumatic cylinder controlled by a solenoid.
 //------------------------------------------------------------------------------
 void RecycleRushRobot::ShowAMStatus()
