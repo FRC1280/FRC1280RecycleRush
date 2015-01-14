@@ -137,6 +137,7 @@ class RecycleRushRobot : public IterativeRobot
 		// and analog devices connected through the eStop Robotics CCI.
 		//----------------------------------------------------------------------
 		DriverStation	 *pDriverStation;
+		Joystick		 *pDriveStick;
 
 		// eStop Robotics Custom Control Interface (CCI)
 		Joystick         *pCCI;                 // CCI
@@ -158,7 +159,7 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		// Robot Objects
 		//----------------------------------------------------------------------
-		RobotDrive		*pDriverTrain;
+		RobotDrive		*pDriveTrain;
 		Grabber 		*pGrabber;
 		//----------------------------------------------------------------------
 		// VARIABLES USED IN CLASS
@@ -468,7 +469,7 @@ void RecycleRushRobot::TeleopPeriodic()
 	GetRobotSensorInput();
 
 	//Set Drive Speed
-	pDriveTrain->MechanumDrive_Cartesian(pDriveStick->GetX(), pDriveStick->GetY(), pDriveStick->GetTwist());
+	pDriveTrain->MecanumDrive_Cartesian(pDriveStick->GetX(), pDriveStick->GetY(), pDriveStick->GetTwist());
 
 
 	// Turn camera LED lights on or off
@@ -529,7 +530,7 @@ void RecycleRushRobot::ShowDSValues()
 // Show the values for driver station inputs
 
     // Camera Light Switch Value
-	SmartDashboard::PutBoolean("Camera Lights",LightsOn;
+	SmartDashboard::PutBoolean("Camera Lights",lightsOn);
 	SmartDashboard::PutBoolean("Grabber In",grabberIn);
 
 	return;
