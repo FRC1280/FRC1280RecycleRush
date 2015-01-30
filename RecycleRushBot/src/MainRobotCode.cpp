@@ -9,6 +9,7 @@
 #include "../H/CameraLights.h"
 #include "../H/Grabber.h"
 #include "../H/Elevator.h"
+#include "../H/Vision.h"
 
 #define CONSOLE
 
@@ -95,20 +96,19 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 
 		// cRIO Digital Sidecar Channels - GPIO & Spare Power Outputs
-		// Robot inputs
-		// - Air compressor pressure switch (indicates when pressure is
-		//   too high)
-		static const uint PRESSURE_SW_CH           = 1;
+		// Robot inputs and Sensors
+
 		// Autonomous Mode switches
 
 		// cRIO Analog Breakout Input - Banner Sensors
 		static const uint ELEVATOR_POT_CH		   = 1;
-		static const uint DRIVE_GYRO_CH			   = 2;
-		// Robot inputs
+		//static const uint DRIVE_GYRO_CH			   = 2;
+
 		// Banner Sensors for elevator, loader and shooter positions
 		static const uint TOP_LIMIT_SW_CH		   =  0;
 		static const uint BOTTOM_LIMIT_SW_CH	   =  1;
 
+		// Robot Outputs
 
 		// cRIO Digital Sidecar Channels - Robot PWM Controls (Outputs)
 		// Motors with Victor & Talon speed controllers
@@ -117,10 +117,9 @@ class RecycleRushRobot : public IterativeRobot
 		static const uint LEFT_REAR_MOTOR_CH	   = 1;
 		static const uint RIGHT_FRONT_MOTOR_CH	   = 2;
 		static const uint RIGHT_REAR_MOTOR_CH      = 3;
-		static const uint BELT_MOTOR_CH			   = 4;
+		static const uint ELEVATOR_MOTOR_CH		   = 4;
 
 		// cRIO Digital Sidecar Channels - Robot Relay Controls (Outputs)
-		static const uint COMPRESSOR_CH         =  1;
 		static const uint CAMERA_LIGHTS_CH      =  2;
 
 		// cRIO Solenoid Breakout Channels
@@ -187,6 +186,7 @@ class RecycleRushRobot : public IterativeRobot
 		RobotDrive		*pDriveTrain;
 		Grabber 		*pGrabber;
 		Elevator		*pElevator;
+		Vision			*pVision;
 		//----------------------------------------------------------------------
 		// VARIABLES USED IN CLASS
 		//----------------------------------------------------------------------
@@ -288,7 +288,7 @@ RecycleRushRobot::RecycleRushRobot()
 	// GPIO & Spare Power Inputs
 	// - Autonomous Mode Switches
 	
-	pDriveGyro           = new Gyro(DRIVE_GYRO_CH);
+	//pDriveGyro           = new Gyro(DRIVE_GYRO_CH);
 	//----------------------------------------------------------------------
 	// ROBOT CONTROLS (OUTPUTS)
 	//----------------------------------------------------------------------
@@ -302,7 +302,7 @@ RecycleRushRobot::RecycleRushRobot()
 
 	pGrabber 			 = new Grabber(GRABBER_CH);
 
-	pElevator			 = new Elevator(BELT_MOTOR_CH, ELEVATOR_POT_CH,TOP_LIMIT_SW_CH,BOTTOM_LIMIT_SW_CH );
+	pElevator			 = new Elevator(ELEVATOR_MOTOR_CH, ELEVATOR_POT_CH,TOP_LIMIT_SW_CH,BOTTOM_LIMIT_SW_CH );
 	
 	//----------------------------------------------------------------------
 	// INITIALIZE VARIABLES
@@ -401,6 +401,8 @@ void RecycleRushRobot::AutonomousInit()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::TeleopInit()
 {
+	pVision = new Vision;
+
 	// General loop count & elapsed time initialization
 	loopCount      = 0;
 	loopsPerMinute = 0;
@@ -457,7 +459,6 @@ void RecycleRushRobot::AutonomousPeriodic()
 	// Calculate & display elapsed seconds
 	elapsedSec = (int)GetClock() - startSec;
 
-
 	GetRobotSensorInput();
 	
 	ShowRobotValues();
@@ -495,6 +496,8 @@ void RecycleRushRobot::TeleopPeriodic()
 
 	// Calculate & display elapsed seconds
 	elapsedSec = (int)GetClock() - startSec;
+
+	pVision->processImage();
 
 	// Get inputs from the driver station
 	GetDriverStationInput();
@@ -608,7 +611,9 @@ void RecycleRushRobot::ShowRobotValues()
 
 	// Show Time
 	SmartDashboard::PutNumber("Elapsed Seconds", elapsedSec);
-	/*SmartDashboard::PutNumber("Front Left Motor Speed", pDriveTrain->m_frontLeftMotor->Get());
+	SmartDashboard::PutBoolean("Camera is working", pVision->getCameraWorking());
+	//SmartDashboard::PutBoolean("Camera sees bright", pVision->getIsBright());
+	/*SmartDashboard::PutNumber("Front Left Motor Speed", pDriveTrain->m_frontLeftMotor->œGet());
 	SmartDashboard::PutNumber("Front Right Motor Speed", pDriveTrain->m_frontRightMotor->Get());
 	SmartDashboard::PutNumber("Rear Left Motor Speed", pDriveTrain->m_rearLeftMotor->Get());
 	SmartDashboard::PutNumber("Rear Right Motor Speed", pDriveTrain->m_rearRightMotor->Get());*/
