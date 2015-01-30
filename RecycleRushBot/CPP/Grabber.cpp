@@ -8,10 +8,9 @@
 //------------------------------------------------------------------------------
 Grabber::Grabber(uint grabberChannel)
 {
-
 	pGrabberSolenoid = new Solenoid(grabberChannel);
 
-	MoveOut();
+	OpenGrabber();
 }
 //------------------------------------------------------------------------------
 // METHOD:  Grabber::~Grabber()
@@ -29,39 +28,25 @@ Grabber::~Grabber()
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void  Grabber::ToggleGrabber(int grabberPosition)
-{
-	if(grabberPosition == kGrabberIn)
-		MoveIn();
-	else if(grabberPosition == kGrabberOut)
-		MoveOut();
-
-	return;
-}
-//------------------------------------------------------------------------------
-// METHOD:  Grabber::MoveIn()
-// Type:	Method
-//------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------
-void  Grabber::MoveIn()
+void  Grabber::OpenGrabber()
 {
 	pGrabberSolenoid->Set(true);
-	grabberPos = kGrabberIn;
+
+	grabberPosition = kGrabberOpen;
 
 	return;
 }
 //------------------------------------------------------------------------------
-// METHOD:  Grabber::MoveOut()
+// METHOD:  Grabber::CloseGrabber()
 // Type:	Method
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void  Grabber::MoveOut()
+void  Grabber::CloseGrabber()
 {
 	pGrabberSolenoid->Set(false);
 
-	grabberPos = kGrabberOut;
+	grabberPosition = kGrabberClosed;
 
 	return;
 }
@@ -71,7 +56,7 @@ void  Grabber::MoveOut()
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-int   Grabber::GetPosition()
+bool  Grabber::GetPosition()
 {
-	return grabberPos;
+	return grabberPosition;
 }
