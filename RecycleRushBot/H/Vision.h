@@ -9,10 +9,8 @@ class Vision
 		Vision(void);
 		void processImage(void);
 		bool getIsBright(void) { return isBright; }
-		bool getCameraWorking(void) { return cameraWorking; }
 	private:
 		AxisCamera *camera;
-		bool cameraWorking;
 		bool isBright;
 };
 

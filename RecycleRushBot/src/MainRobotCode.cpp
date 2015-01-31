@@ -611,8 +611,7 @@ void RecycleRushRobot::ShowRobotValues()
 
 	// Show Time
 	SmartDashboard::PutNumber("Elapsed Seconds", elapsedSec);
-	SmartDashboard::PutBoolean("Camera is working", pVision->getCameraWorking());
-	//SmartDashboard::PutBoolean("Camera sees bright", pVision->getIsBright());
+	SmartDashboard::PutBoolean("Camera sees bright", pVision->getIsBright());
 	/*SmartDashboard::PutNumber("Front Left Motor Speed", pDriveTrain->m_frontLeftMotor->œGet());
 	SmartDashboard::PutNumber("Front Right Motor Speed", pDriveTrain->m_frontRightMotor->Get());
 	SmartDashboard::PutNumber("Rear Left Motor Speed", pDriveTrain->m_rearLeftMotor->Get());
