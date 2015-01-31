@@ -12,6 +12,7 @@
 #include "../H/Vision.h"
 
 #define CONSOLE
+//#define VISION
 
 //------------------------------------------------------------------------------
 // DEFINE RecycleRushRobot CLASS
@@ -56,8 +57,8 @@ class RecycleRushRobot : public IterativeRobot
 
 		// Driver station and robot input gathering methods
 		void   GetDriverStationInput();
-		void   GetRobotSensorInput();
 		void   ShowDSValues();
+		void   GetRobotSensorInput();
 		void   ShowRobotValues();
 
 		// Miscellaneous robot function methods
@@ -81,7 +82,7 @@ class RecycleRushRobot : public IterativeRobot
 		static const uint CCI_PORT         =  1;  // eStop Robots CCI Inputs
 
 		// Driver Station CCI Channels (Uses joystick button references)
-		static const uint LED_LIGHTS_SW_CH          =  1;
+		static const uint CAMERA_LIGHTS_SW_CH       =  1;
 		static const uint GRABBER_SW_CH			    =  3;
 		static const uint ELEVATOR_AUTO_SW_CH	    =  4;
 		static const uint ELEVATOR_GROUND_SW_CH     =  5;
@@ -186,7 +187,9 @@ class RecycleRushRobot : public IterativeRobot
 		RobotDrive		*pDriveTrain;
 		Grabber 		*pGrabber;
 		Elevator		*pElevator;
+#ifdef VISION
 		Vision			*pVision;
+#endif
 		//----------------------------------------------------------------------
 		// VARIABLES USED IN CLASS
 		//----------------------------------------------------------------------
@@ -208,7 +211,7 @@ class RecycleRushRobot : public IterativeRobot
 		// Camera Switches
 		bool   lightsOn;
 		// Robot Switches
-		bool   grabberIn;
+		bool   grabberOpen;
 		float  elevatorTarget;
 
 		//----------------------------------------------------------------------
@@ -229,10 +232,6 @@ class RecycleRushRobot : public IterativeRobot
 		// Camera Image Processing
 		//----------------------------------------------------------------------
 		
-		//----------------------------------------------------------------------
-		// Grabber Speed / Shifting
-		//----------------------------------------------------------------------
-		int    tranSpeed;            // Grabber speed
 
 		//----------------------------------------------------------------------
 		// Autonomous Mode Switches & variables
@@ -272,7 +271,7 @@ RecycleRushRobot::RecycleRushRobot()
     // Joystick Buttons
 
 	// CCI Switches
-	pCameraLightSwitch   			 = new JoystickButton(pCCI,LED_LIGHTS_SW_CH);
+	pCameraLightSwitch   			 = new JoystickButton(pCCI,CAMERA_LIGHTS_SW_CH);
 	pGrabberSwitch		 			 = new JoystickButton(pCCI,GRABBER_SW_CH);
 	pElevatorAutoSwitch				 = new JoystickButton(pCCI, ELEVATOR_AUTO_SW_CH);
 	pElevatorGroundSwitch			 = new JoystickButton(pCCI, ELEVATOR_GROUND_SW_CH);
@@ -331,14 +330,15 @@ RecycleRushRobot::~RecycleRushRobot()
 //------------------------------------------------------------------------------
 // Functions:
 // - Initializes the SmartDashboard
-// - Turns air compressor on
 // - Sets type of input used to determine elevator position
 // - Sets target values for three preset elevator positions
 // - Initializes robot status tracking settings
 //------------------------------------------------------------------------------
 void RecycleRushRobot::RobotInit()
 {
+#ifdef CONSOLE
 	SmartDashboard::init();
+#endif
 
 	return;
 }
@@ -371,7 +371,6 @@ void RecycleRushRobot::DisabledInit()
 // - Resets the loop counter for autonomous mode
 // - Resets the AutoState
 // - Resets the encoders on the wheels that measure distance traveled.
-// - Shifts the Grabber into low gear
 // - Optionally prints the status of the autonomous mode switches for debugging
 //   purposes
 //------------------------------------------------------------------------------
@@ -384,7 +383,11 @@ void RecycleRushRobot::AutonomousInit()
 	elapsedSec = 0;
 	startSec   = (int)GetClock();
 	
-	GetRobotSensorInput();
+	// Set Robot Components to Default Starting Positions
+	pCameraLights->TurnOn();
+	pGrabber->OpenGrabber();
+
+	GetAutoModeSwitches();
 		
 	return;
 }
@@ -401,7 +404,9 @@ void RecycleRushRobot::AutonomousInit()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::TeleopInit()
 {
+#ifdef VISION
 	pVision = new Vision;
+#endif
 
 	// General loop count & elapsed time initialization
 	loopCount      = 0;
@@ -410,9 +415,6 @@ void RecycleRushRobot::TeleopInit()
 	elapsedSec = 0;
 	startSec   = (int)GetClock();
 	oldSec     = startSec;
-
-	GetDriverStationInput();
-	GetRobotSensorInput();
 
 	return;
 }
@@ -438,7 +440,10 @@ void RecycleRushRobot::DisabledPeriodic()
 	elapsedSec = (int)GetClock() - startSec;
 	
 	GetAutoModeSwitches();
+
+#ifdef CONSOLE
 	ShowRobotValues();
+#endif
 
 	return;
 }
@@ -461,8 +466,6 @@ void RecycleRushRobot::AutonomousPeriodic()
 
 	GetRobotSensorInput();
 	
-	ShowRobotValues();
-
 	ShowAMStatus();
 	
 	RunAutonomousMode();
@@ -483,8 +486,6 @@ void RecycleRushRobot::AutonomousPeriodic()
 // - Feeds to watchdog to prevent robot shut-down
 // - Obtains input from the driver station (joystick inputs, switches, arm
 //   rotator potentiometer)
-// - If a Grabber shift was requested by the driver station, shift
-//   Grabber
 // - Sets the drive motor values based on joystick movement
 // - Sets the ball launcher motor speed values based on on/off switch and
 //   potentiometer position
@@ -497,11 +498,12 @@ void RecycleRushRobot::TeleopPeriodic()
 	// Calculate & display elapsed seconds
 	elapsedSec = (int)GetClock() - startSec;
 
+#ifdef VISION
 	pVision->processImage();
+#endif
 
 	// Get inputs from the driver station
 	GetDriverStationInput();
-	GetAutoModeSwitches();
 	
 	// Get robot sensor input
 	GetRobotSensorInput();
@@ -510,24 +512,21 @@ void RecycleRushRobot::TeleopPeriodic()
 	pDriveTrain->MecanumDrive_Cartesian (pDriveStick->GetX(), pDriveStick->GetY(), pDriveStick->GetTwist()); //,pDriveGyro->GetAngle());
 
 
-	// Turn camera LED lights on or off
+	// Turn camera LED lights on or off based on driver station input
 	if ( lightsOn )
 		pCameraLights->TurnOn();
 	else
 		pCameraLights->TurnOff();
 
-	if ( grabberIn )
-		pGrabber->ToggleGrabber(Grabber::kGrabberIn);
+	// Open or Close Brabber based on driver station input
+	if ( grabberOpen )
+		pGrabber->OpenGrabber();
 	else
-		pGrabber->ToggleGrabber(Grabber::kGrabberOut);
+		pGrabber->CloseGrabber();
 
 	pElevator->SetTarget(elevatorTarget);
 	pElevator->CheckLimits();
 
-#ifdef CONSOLE
-	// Display SmartDashboard Values
-   
-#endif
 	return;
 }
 
@@ -537,15 +536,15 @@ void RecycleRushRobot::TeleopPeriodic()
 //------------------------------------------------------------------------------
 // Obtains the input from the DriverStation required for teleoperated mode.
 // Includes obtaining input for the following switches:
-// - Ball Launcher Motor On (SPSD fitch)
+// -
 // May also need to include reading additional switches depending on where
 // functions are included on the robot or driver station.
-// - Grabber High/Low speed (SPST switch)
+// -
 // Include also:
-// - Reading joystick functions (left and right)
-// - Reading arm rotation potentiometer (analog input)
+// - Reading joystick function
+// - Reading elevator position potentiometer (analog input)
 // Does not include:
-// - Tank drive input from the joysticks.  This is coded directly in the
+// - Robot drive input from the joystick.  This is coded directly in the
 //   SetDriveMotors() method.
 //------------------------------------------------------------------------------
 void RecycleRushRobot::GetDriverStationInput()
@@ -554,7 +553,9 @@ void RecycleRushRobot::GetDriverStationInput()
 	// Obtain the position of switches on the driver station
 	// Camera Switches
     lightsOn  				 = pCameraLightSwitch->Get();
-    grabberIn				 = pGrabberSwitch->Get();
+
+    // Get grabber position
+    grabberOpen				 = pGrabberSwitch->Get();
 
     if (pElevatorGroundSwitch->Get()){
     	elevatorTarget = Elevator::kGROUNDPOS;
@@ -575,10 +576,13 @@ void RecycleRushRobot::GetDriverStationInput()
 		elevatorTarget = Elevator::kBOX5;
 	}
 
+#ifdef CONSOLE
     ShowDSValues();
+#endif
 
 	return;
 }
+#ifdef CONSOLE
 //------------------------------------------------------------------------------
 // METHOD:  RecycleRushRobot::ShowDSValues()
 // Type:	Public accessor for RecycleRushRobot class
@@ -590,34 +594,16 @@ void RecycleRushRobot::ShowDSValues()
 // Show the values for driver station inputs
 
     // Camera Light Switch Value
-	SmartDashboard::PutBoolean("Camera Lights",lightsOn);
-	SmartDashboard::PutBoolean("Grabber In",grabberIn);
+	SmartDashboard::PutBoolean("Camera Lights Switch",lightsOn);
+	SmartDashboard::PutBoolean("Grabber Switch",grabberOpen);
+
 	SmartDashboard::PutNumber("Joystick X",pDriveStick->GetX());
 	SmartDashboard::PutNumber("Joystick Y",pDriveStick->GetY());
 	SmartDashboard::PutNumber("Joystick Twist",pDriveStick->GetTwist());
 
-
 	return;
 }
-//------------------------------------------------------------------------------
-// METHOD:  RecycleRushRobot::ShowRobotValues()
-// Type:	Public accessor for RecycleRushRobot class
-//------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------
-void RecycleRushRobot::ShowRobotValues()
-{
-// Show the values from the robot components
-
-	// Show Time
-	SmartDashboard::PutNumber("Elapsed Seconds", elapsedSec);
-	SmartDashboard::PutBoolean("Camera sees bright", pVision->getIsBright());
-	/*SmartDashboard::PutNumber("Front Left Motor Speed", pDriveTrain->m_frontLeftMotor->œGet());
-	SmartDashboard::PutNumber("Front Right Motor Speed", pDriveTrain->m_frontRightMotor->Get());
-	SmartDashboard::PutNumber("Rear Left Motor Speed", pDriveTrain->m_rearLeftMotor->Get());
-	SmartDashboard::PutNumber("Rear Right Motor Speed", pDriveTrain->m_rearRightMotor->Get());*/
-
-}
+#endif
 //------------------------------------------------------------------------------
 // METHOD:  RecycleRushRobot::GetRobotSensorInput()
 // Type:	Public accessor for RecycleRushRobot class
@@ -629,13 +615,31 @@ void RecycleRushRobot::ShowRobotValues()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::GetRobotSensorInput()
 {
-	// Get distanced traveled by encoder
-
+#ifdef CONSOLE
 	ShowRobotValues();
+#endif
 	
 	return;
 }
+#ifdef CONSOLE
+//------------------------------------------------------------------------------
+// METHOD:  RecycleRushRobot::ShowRobotValues()
+// Type:	Public accessor for RecycleRushRobot class
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void RecycleRushRobot::ShowRobotValues()
+{
+    SmartDashboard::PutBoolean("Camera Lights",pCameraLights->GetCameraStatus());
+    SmartDashboard::PutBoolean("Grabber Position",pGrabber->GetPosition());
 
+#ifdef VISION
+	SmartDashboard::PutBoolean("Camera sees bright", pVision->getIsBright());
+#endif
+
+	return;
+}
+#endif
 //------------------------------------------------------------------------------
 // METHOD:  RecycleRushRobot::GetAutoModeSwitches()
 // Type:	Public accessor for RecycleRushRobot class
@@ -667,7 +671,6 @@ int RecycleRushRobot::GetTime()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::RunAutonomousMode()
 {
-
 	return;
 }
 
@@ -680,6 +683,5 @@ void RecycleRushRobot::RunAutonomousMode()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::ShowAMStatus()
 {
-	
 	return;
 }

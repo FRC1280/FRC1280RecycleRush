@@ -21,6 +21,5 @@ class CameraLights
 	private:
 		Relay *pCameraLights;
 		bool  lightStatus;
-
 };
 #endif
