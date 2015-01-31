@@ -11,20 +11,15 @@
 class Grabber
 {
 	public:
-		static const int kGrabberIn = 1;
-		static const int kGrabberOut  = 0;
+		static const bool kGrabberOpen    = true;
+		static const bool kGrabberClosed  = false;
 		Grabber(uint grabberChannel);
 		~Grabber();
-		void ToggleGrabber(int grabberPosition);
-		int  GetPosition();
+		void  OpenGrabber();
+		void  CloseGrabber();
+		bool  GetPosition();
 	protected:
-		void MoveIn();
-		void MoveOut();
-
 		Solenoid *pGrabberSolenoid;
-
-		int  grabberPos;
-		static const bool ON  = true;
-		static const bool OFF = false;
+		bool   grabberPosition;
 };
 #endif

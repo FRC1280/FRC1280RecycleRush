@@ -96,7 +96,7 @@ void Vision::processImage ()
 
 		x=0; y=0;
 
-		while (getPix)
+//		while (getPix)
 
 		delete image;
 	}
