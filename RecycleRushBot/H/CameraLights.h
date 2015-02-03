@@ -13,13 +13,16 @@ class CameraLights
 	public:
 		static const bool kOff = false;
 		static const bool kOn  = true;
+
 		CameraLights(uint channel);
 		~CameraLights();
+
 		void TurnOn();
 		void TurnOff();
-		bool GetCameraStatus();
+		bool GetCameraStatus() const;
 	private:
 		Relay *pCameraLights;
+
 		bool  lightStatus;
 };
 #endif

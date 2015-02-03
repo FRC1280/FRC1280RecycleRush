@@ -57,7 +57,7 @@ void  Grabber::CloseGrabber()
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-bool  Grabber::GetPosition()
+bool  Grabber::GetPosition() const
 {
 	return grabberPosition;
 }

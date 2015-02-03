@@ -58,7 +58,7 @@ void  CameraLights::TurnOff()
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-bool  CameraLights::GetCameraStatus()
+bool  CameraLights::GetCameraStatus() const
 {
 	return lightStatus;
 }

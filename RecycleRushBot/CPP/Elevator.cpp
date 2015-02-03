@@ -1,83 +1,372 @@
 #include "../H/Elevator.h"
 
-Elevator::Elevator(uint winchCh, uint potCh, uint limitTopCh, uint limitBottomCh)
+Elevator::Elevator(uint elevMotorCh, uint elevPotCh, uint upperLimitSwCh, uint lowerLimitSwCh)
 {
-	pWinch       = new Talon(winchCh);
-	pPot         = new AnalogPotentiometer(potCh, POT_TURNS*360, 0);
-	pLimitTop    = new DigitalInput(limitTopCh);
-	pLimitBottom = new DigitalInput(limitBottomCh);
-	pPid         = new PIDController(KP, KI, KD, pPot, pWinch);
+	pElevatorMotor    = new Talon(elevMotorCh);
+	pElevatorPot      = new AnalogPotentiometer(elevPotCh, POT_FULL_RANGE, POT_OFFSET);
+	pUpperLimitHit    = new DigitalInput(upperLimitSwCh);
+	pLowerLimitHit    = new DigitalInput(lowerLimitSwCh);
 
-	//Initialize PID controller
-	offset   = kGROUND;
-	autoMode = kManual;
+	pPIDController    = new PIDController(kP, kI, kD, pElevatorPot, pElevatorMotor);
 
-	pPid->SetInputRange(0,POT_TURNS*360);
-	pPid->SetOutputRange(-.25,.25);
-	pPid->SetTolerance(5);
+	// Initialize class variables
+	targetRatio    = 0.0;
+	targetConstant = 0.0;
+	elevatorTarget = 0.0;
+
+	// Configure PID Controller
+	pPIDController->SetInputRange(ELEV_POS_LOWER_LIMIT,ELEV_POS_UPPER_LIMIT);
+	pPIDController->SetOutputRange(MOTOR_SPEED_DOWN,MOTOR_SPEED_UP);
+	pPIDController->SetAbsoluteTolerance(TARGET_TOLERANCE);
+
+	// Set Input to Robot POT ratio and offset using default input values
+	SetInputPotRange(DEFAULT_INPUT_LOWER_LIMIT,DEFAULT_INPUT_UPPER_LIMIT);
+
+	// Set default starting position for elevator to current position
+	MoveElevator(pElevatorPot->Get());
 }
 
 Elevator::~Elevator()
 {
 }
-
-void Elevator::SetMode(bool mode)
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::SetInputPotRange()
+// Type:	Public accessor method
+//------------------------------------------------------------------------------
+// Uses as input the upper and lower limits on an input potentiometer to
+// calculate the ratio and offset between the input potentiometer and the
+// robot potentiometer.  This must be invoked by the calling program to ensure
+// proper translation from the input values and the target elevator POT
+// reading.
+//------------------------------------------------------------------------------
+void   Elevator::SetInputPotRange(double minPotValue, double maxPotValue)
 {
-	autoMode = mode;
+	inputPOTLowerLimit = minPotValue;
+	inputPOTUpperLimit = maxPotValue;
+
+	CalcTargetRatioConstant();
 
 	return;
 }
-
-void Elevator::SetOffset(offsets newOffset)
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::MoveElevator()
+// Type:	Public accessor method
+//------------------------------------------------------------------------------
+// Calculates a target robot POT value based on an input POT and initiates
+// moving elevator to that target.
+//------------------------------------------------------------------------------
+bool  Elevator::MoveElevator(double inputPotReading)
 {
-	if (autoMode)
-	{
-		pPid->SetSetpoint(pPid->GetSetpoint()-offset+newOffset); //change the PID setpoint
+	bool targetFound = false;
 
-		offset=newOffset; //update the saved offset
+	targetInput = inputPotReading;
+
+	elevatorTarget = CalcTargetPotValue(inputPotReading);
+
+	if ( usePIDController == PID_CONTROLLER_ON)
+	{
+		targetFound = GoToPotTargetPID(elevatorTarget);
+	}
+	else
+	{
+		targetFound = GoToPotTargetNoPID(elevatorTarget);
 	}
 
-	return;
+	return targetFound;
 }
-
-void Elevator::SetTarget(float target)
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::MoveElevator()
+// Type:	Public accessor method
+//------------------------------------------------------------------------------
+// Calculates a target robot POT value based on input base and offset
+// positions.
+//------------------------------------------------------------------------------
+bool  Elevator::MoveElevator(uint inputTarget, uint inputOffset)
 {
-	pPid->SetSetpoint(target+offset*(!autoMode)); //set the setpoint to the new target, factor in offset only if we are in auto mode
+	bool   targetFound  = false;
+	double baseTarget   = 0;
+	double offsetTarget = 0;
 
-	return;
-}
+	targetInput = 9999999;
 
-void Elevator::CheckLimits()
-{
-	if (pPid->IsEnabled())
+	baseTarget = CalcBaseTarget(inputTarget);
+	offsetTarget = CalcOffsetTarget(inputOffset);
+
+	elevatorTarget = baseTarget + offsetTarget;
+
+	if ( usePIDController == PID_CONTROLLER_ON)
 	{
-		if (pLimitTop->Get())
-		{
-			pPid->Disable();
-		}
+		targetFound = GoToPotTargetPID(elevatorTarget);
+	}
+	else
+	{
+		targetFound = GoToPotTargetNoPID(elevatorTarget);
+	}
 
-		else if (pLimitBottom->Get())
+	return targetFound;
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::GetMotorSpeed()
+// Type:	Public accessor method
+//------------------------------------------------------------------------------
+// Returns the current elevator motor speed.
+//------------------------------------------------------------------------------
+float  Elevator::GetMotorSpeed() const
+{
+	return pElevatorMotor->Get();
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::GetCurrentPosition()
+// Type:	Public accessor method
+//------------------------------------------------------------------------------
+// Returns the current elevator position potentiometer reading.
+//------------------------------------------------------------------------------
+double Elevator::GetCurrentPosition() const
+{
+	return pElevatorPot->Get();
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::GetPositionTarget()
+// Type:	Public accessor method
+//------------------------------------------------------------------------------
+// Returns the target elevator position potentiometer reading.
+//------------------------------------------------------------------------------
+double Elevator::GetPositionTarget() const
+{
+	return elevatorTarget;
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::GetPositionTargetInput()
+// Type:	Public accessor method
+//------------------------------------------------------------------------------
+// Returns the target elevator input potentiometer reading.
+//------------------------------------------------------------------------------
+double Elevator::GetPositionTargetInput() const
+{
+	return targetInput;
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::GetUpperLimitSwitch()
+// Type:	Public accessor method
+//------------------------------------------------------------------------------
+// Returns the value of the upper limit switch.
+//------------------------------------------------------------------------------
+bool   Elevator::GetUpperLimitSwitch() const
+{
+	return pUpperLimitHit->Get();
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::GetLowerLimitSwitch()
+// Type:	Public accessor method
+//------------------------------------------------------------------------------
+// Returns the value of the lower limit switch
+//------------------------------------------------------------------------------
+bool   Elevator::GetLowerLimitSwitch() const
+{
+	return pLowerLimitHit->Get();
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::CalcTargetRatioOffset()
+// Type:	Private method
+//------------------------------------------------------------------------------
+// Performs the actual calculation to determine the ratio and offset used to
+// convert an input potentiometer reading into a target elevator potentiometer
+// reading.
+//------------------------------------------------------------------------------
+void   Elevator::CalcTargetRatioConstant()
+{
+	targetRatio    = ( ( ELEV_POS_UPPER_LIMIT - ELEV_POS_LOWER_LIMIT )
+                   / (inputPOTUpperLimit - inputPOTLowerLimit ) );
+
+	targetConstant = ( ELEV_POS_LOWER_LIMIT - ( inputPOTLowerLimit * targetRatio ) );
+
+	return;
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::CalcTargetPotValue()
+// Type:	Private method
+//------------------------------------------------------------------------------
+// Converts an input potentiometer reading into a target elevator potentiometer
+// reading.
+//------------------------------------------------------------------------------
+double Elevator::CalcTargetPotValue(double inputPotValue)
+{
+	double targetPot;
+
+	targetPot = ( ( inputPotValue * targetRatio ) + targetConstant );
+
+	return targetPot;
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::CalcBaseTarget()
+// Type:	Private method
+//------------------------------------------------------------------------------
+// Determines the base elevator position target based on an input position.
+//------------------------------------------------------------------------------
+double Elevator::CalcBaseTarget(uint basePosition)
+{
+	double targetPot = 0;
+
+    switch ( basePosition )
+    {
+    	case kPosition1:
+			targetPot = POSITION1_BASE_TARGET;
+    		break;
+
+    	case kPosition2:
+			targetPot = POSITION2_BASE_TARGET;
+			break;
+
+    	case kPosition3:
+			targetPot = POSITION3_BASE_TARGET;
+			break;
+
+    	case kPosition4:
+			targetPot = POSITION4_BASE_TARGET;
+			break;
+
+    	case kPosition5:
+			targetPot = POSITION5_BASE_TARGET;
+			break;
+
+    	case kPosition6:
+			targetPot = POSITION6_BASE_TARGET;
+			break;
+
+    	default:
+    		targetPot = POSITION2_BASE_TARGET;
+    		break;
+    }
+
+	return targetPot;
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::CalcOffsetTarget()
+// Type:	Private method
+//------------------------------------------------------------------------------
+// Determines the offset to the elevator position target based on an input
+// offset.
+//------------------------------------------------------------------------------
+double Elevator::CalcOffsetTarget(uint offsetPosition)
+{
+	double offsetPot = 0;
+
+    switch ( offsetPosition )
+    {
+    	case kGround:
+			offsetPot = OFFSET_GROUND;
+    		break;
+
+    	case kBurm:
+			offsetPot = OFFSET_BURM;
+			break;
+
+    	case kDivider:
+			offsetPot = OFFSET_DIVIDER;
+			break;
+
+    	default:
+    		offsetPot = OFFSET_GROUND;
+    		break;
+    }
+
+	return offsetPot;
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::GoToPotTargetPID()
+// Type:	Private method
+//------------------------------------------------------------------------------
+//
+//
+//
+//------------------------------------------------------------------------------
+bool  Elevator::GoToPotTargetPID(double inputPotValue)
+{
+	bool targetHit = false;
+
+	pPIDController->SetSetpoint(inputPotValue);
+	pPIDController->Enable();
+
+	if ( pPIDController->Get() < pPIDController->GetSetpoint() )  // Moving up
+	{
+		if ( pUpperLimitHit->Get() )
 		{
-			pPid->Disable();
+			pPIDController->Disable();
+			targetHit = true;
+		}
+		else
+		{
+			targetHit = pPIDController->OnTarget();
 		}
 	}
-	else //if PID is not enabled
+	else
 	{
-		if (pLimitTop->Get())
-		{
-			if (pPid->GetSetpoint()<topThreshold)
+		if ( pPIDController->Get() > pPIDController->GetSetpoint() )  // Moving down
 			{
-				pPid->Enable();
+				if ( pLowerLimitHit->Get() )
+				{
+					pPIDController->Disable();
+					targetHit = true;
+				}
+				else
+				{
+					targetHit = pPIDController->OnTarget();
+				}
+			}
+		else
+		{
+			targetHit = pPIDController->OnTarget();
+		}
+	}
+
+	return targetHit;
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::GoToPotTargetNoPID()
+// Type:	Private method
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+bool  Elevator::GoToPotTargetNoPID(double inputPotValue)
+{
+	bool   potTargetFound  = false;
+	double targetLowValue  = inputPotValue - TARGET_TOLERANCE;
+	double targetHighValue = inputPotValue + TARGET_TOLERANCE;
+
+	if ( pElevatorPot->Get() >= targetLowValue  &&
+		 pElevatorPot->Get() <= targetHighValue )
+	{
+		pElevatorMotor->Set(ALL_STOP);
+		potTargetFound = true;
+	}
+	else
+	{
+		if ( pElevatorPot->Get() > targetHighValue )
+		{
+			if ( pLowerLimitHit )
+			{
+				pElevatorMotor->Set(ALL_STOP);
+				potTargetFound = true;
+			}
+			else
+			{
+				pElevatorMotor->Set(MOTOR_SPEED_DOWN);
 			}
 		}
-		else if (pLimitBottom->Get())
-		{
-			if (pPid->GetSetpoint()>bottomThreshold)
+		else
+			if ( pElevatorPot->Get() < targetLowValue )
 			{
-				pPid->Enable();
+				if ( pUpperLimitHit )
+				{
+					pElevatorMotor->Set(ALL_STOP);
+					potTargetFound = true;
+				}
+				else
+				{
+					pElevatorMotor->Set(MOTOR_SPEED_UP);
+				}
 			}
-		}
 	}
 
-	return;
+	return potTargetFound;
 }
