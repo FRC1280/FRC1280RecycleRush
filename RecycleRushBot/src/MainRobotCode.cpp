@@ -3,7 +3,7 @@
 // 2015 Recycle Rush ROBOT CODE
 //------------------------------------------------------------------------------
 #include "WPILib.h" // Instruction to preprocessor to include the WPI Library
-                      // header file
+                    // header file
 #include <cmath>
 
 #include "../H/CameraLights.h"
@@ -21,7 +21,7 @@
 // functions of the base IterativeRobot class.
 // Extends class through:
 // - Overrides to virtual methods contained in the IterativeRobot base class
-// - Methods specific to the 2012 Team 1280 Rebound Rumble robot
+// - Methods specific to the 2015 Team 1280 Recycle Rush robot
 // - Constants used by class
 // - Pointers to required objects
 // - Additional local variables required
@@ -57,6 +57,9 @@ class RecycleRushRobot : public IterativeRobot
 
 		// Driver station and robot input gathering methods
 		void   GetDriverStationInput();
+		void   GetElevatorTarget();
+		void   GetElevatorBase();
+		void   GetElevatorOffset();
 		void   ShowDSValues();
 		void   GetRobotSensorInput();
 		void   ShowRobotValues();
@@ -82,37 +85,36 @@ class RecycleRushRobot : public IterativeRobot
 		static const uint CCI_PORT         =  1;  // eStop Robots CCI Inputs
 
 		// Driver Station CCI Channels (Uses joystick button references)
-		static const uint CAMERA_LIGHTS_SW_CH       =  1;
-		static const uint GRABBER_SW_CH			    =  3;
-		static const uint ELEVATOR_AUTO_SW_CH	    =  4;
-		static const uint ELEVATOR_GROUND_SW_CH     =  5;
+	    static const uint OFFSET_GROUND_SW_CH       =  1;
+		static const uint OFFSET_DIVIDER_SW_CH      =  2;
+		static const uint ELEV_AUTO_MAN_SW_CH       =  3;
+		static const uint GRABBER_SW_CH			    =  4;
 		static const uint ELEVATOR_POSITION1_SW_CH  =  5;
 		static const uint ELEVATOR_POSITION2_SW_CH  =  6;
 		static const uint ELEVATOR_POSITION3_SW_CH  =  7;
 		static const uint ELEVATOR_POSITION4_SW_CH  =  8;
 		static const uint ELEVATOR_POSITION5_SW_CH  =  9;
+		static const uint ELEVATOR_POSITION6_SW_CH  = 10;
 
 		//----------------------------------------------------------------------
 		// ROBOT CHANNELS - INPUTS AND OUTPUTS
 		//----------------------------------------------------------------------
+        // ROBOT INPUTS
+		//----------------------------------------------------------------------
 
-		// cRIO Digital Sidecar Channels - GPIO & Spare Power Outputs
-		// Robot inputs and Sensors
-
-		// Autonomous Mode switches
-
-		// cRIO Analog Breakout Input - Banner Sensors
-		static const uint ELEVATOR_POT_CH		   = 1;
-		//static const uint DRIVE_GYRO_CH			   = 2;
-
-		// Banner Sensors for elevator, loader and shooter positions
+		// roboRio GPIO Channels
 		static const uint TOP_LIMIT_SW_CH		   =  0;
 		static const uint BOTTOM_LIMIT_SW_CH	   =  1;
 
-		// Robot Outputs
+		// roboRio Analog Channels
+		static const uint ELEVATOR_POT_CH		   =  1;
+		//static const uint DRIVE_GYRO_CH			   =  2;
 
-		// cRIO Digital Sidecar Channels - Robot PWM Controls (Outputs)
-		// Motors with Victor & Talon speed controllers
+		//----------------------------------------------------------------------
+        // ROBOT OUTPUTS
+		//----------------------------------------------------------------------
+
+		// roboRio PWM Channels
 		// PWM = Pulsed width modulation
 		static const uint LEFT_FRONT_MOTOR_CH	   = 0;
 		static const uint LEFT_REAR_MOTOR_CH	   = 1;
@@ -120,11 +122,11 @@ class RecycleRushRobot : public IterativeRobot
 		static const uint RIGHT_REAR_MOTOR_CH      = 3;
 		static const uint ELEVATOR_MOTOR_CH		   = 4;
 
-		// cRIO Digital Sidecar Channels - Robot Relay Controls (Outputs)
-		static const uint CAMERA_LIGHTS_CH      =  2;
+		// roboRio Relay Channels
+//		static const uint CAMERA_LIGHTS_CH         = 2;
 
-		// cRIO Solenoid Breakout Channels
-		static const uint GRABBER_CH			=  1;
+		// roboRio Solenoid Channels
+		static const uint GRABBER_CH			   = 1;
 
 		//----------------------------------------------------------------------
 		// CONSTANTS USED TO DETERMINE STATUS OF DRIVER STATION AND ROBOT INPUTS
@@ -156,22 +158,24 @@ class RecycleRushRobot : public IterativeRobot
 
 		// eStop Robotics Custom Control Interface (CCI)
 		Joystick         *pCCI;                 // CCI
-		JoystickButton 	 *pCameraLightSwitch;   // CCI Digital Inputs
+//		JoystickButton 	 *pCameraLightSwitch;   // CCI Digital Inputs
+		JoystickButton   *pElevOffsetGroundSwitch;
+		JoystickButton   *pElevOffsetDividerSwitch;
+		JoystickButton   *pElevAutoSwitch;
 		JoystickButton	 *pGrabberSwitch;
-		JoystickButton   *pElevatorAutoSwitch;
-		JoystickButton   *pElevatorGroundSwitch;
-		JoystickButton   *pElevatorPostition1Switch;
-		JoystickButton   *pElevatorPostition2Switch;
-		JoystickButton   *pElevatorPostition3Switch;
-		JoystickButton   *pElevatorPostition4Switch;
-		JoystickButton   *pElevatorPostition5Switch;
+		JoystickButton   *pElevatorPosition1Switch;
+		JoystickButton   *pElevatorPosition2Switch;
+		JoystickButton   *pElevatorPosition3Switch;
+		JoystickButton   *pElevatorPosition4Switch;
+		JoystickButton   *pElevatorPosition5Switch;
+		JoystickButton   *pElevatorPosition6Switch;
 
 		//----------------------------------------------------------------------
 		// ROBOT INPUT & OUTPUT POINTERS
 		//----------------------------------------------------------------------
 
 		//Analog Inputs
-		Gyro            *pDriveGyro;
+//		Gyro            *pDriveGyro;
 		//----------------------------------------------------------------------
 		// Robot Digital Inputs - GPIO Inputs including Encoders
 		//----------------------------------------------------------------------
@@ -180,7 +184,7 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		// Robot Digital Outputs - Relays (Spikes)
 		//----------------------------------------------------------------------
-		CameraLights	*pCameraLights;			// Camera LED lights
+//		CameraLights	*pCameraLights;			// Camera LED lights
 		//----------------------------------------------------------------------
 		// Robot Objects
 		//----------------------------------------------------------------------
@@ -202,17 +206,19 @@ class RecycleRushRobot : public IterativeRobot
 		// Elevator Position
 		// - Manual input based on potentiometer setting
 		//----------------------------------------------------------------------
-		float  leftDriveSpeed;
-		float  rightDriveSpeed;
+//		float  leftDriveSpeed;
+//		float  rightDriveSpeed;
 
 		//----------------------------------------------------------------------
 		// DRIVER STATION INPUTS - Digital Inputs from eStop Robotics CCI
 		//----------------------------------------------------------------------
 		// Camera Switches
-		bool   lightsOn;
+//		bool   lightsOn;
 		// Robot Switches
 		bool   grabberOpen;
-		float  elevatorTarget;
+		double elevatorTarget;
+		uint   elevatorBase;
+		uint   elevatorOffset;
 
 		//----------------------------------------------------------------------
 		// CLASS VARIABLES USED TO TRACK ROBOT STATUS
@@ -220,7 +226,7 @@ class RecycleRushRobot : public IterativeRobot
 		// General status tracking
 		//----------------------------------------------------------------------
 		// Class variables to track look (packet) counts
-		uint loopCount;
+		uint   loopCount;
         float  loopsPerMinute;
 
         // Class variables to track time
@@ -271,15 +277,17 @@ RecycleRushRobot::RecycleRushRobot()
     // Joystick Buttons
 
 	// CCI Switches
-	pCameraLightSwitch   			 = new JoystickButton(pCCI,CAMERA_LIGHTS_SW_CH);
+//	pCameraLightSwitch   			 = new JoystickButton(pCCI,CAMERA_LIGHTS_SW_CH);
+    pElevOffsetGroundSwitch          = new JoystickButton(pCCI,OFFSET_GROUND_SW_CH);
+    pElevOffsetDividerSwitch         = new JoystickButton(pCCI,OFFSET_DIVIDER_SW_CH);
 	pGrabberSwitch		 			 = new JoystickButton(pCCI,GRABBER_SW_CH);
-	pElevatorAutoSwitch				 = new JoystickButton(pCCI, ELEVATOR_AUTO_SW_CH);
-	pElevatorGroundSwitch			 = new JoystickButton(pCCI, ELEVATOR_GROUND_SW_CH);
-	pElevatorPostition1Switch		 = new JoystickButton(pCCI, ELEVATOR_POSITION1_SW_CH);
-	pElevatorPostition2Switch		 = new JoystickButton(pCCI, ELEVATOR_POSITION2_SW_CH);
-	pElevatorPostition3Switch		 = new JoystickButton(pCCI, ELEVATOR_POSITION3_SW_CH);
-	pElevatorPostition4Switch		 = new JoystickButton(pCCI, ELEVATOR_POSITION4_SW_CH);
-	pElevatorPostition5Switch		 = new JoystickButton(pCCI, ELEVATOR_POSITION5_SW_CH);
+	pElevAutoSwitch	        	     = new JoystickButton(pCCI, ELEV_AUTO_MAN_SW_CH);
+	pElevatorPosition1Switch		 = new JoystickButton(pCCI, ELEVATOR_POSITION1_SW_CH);
+	pElevatorPosition2Switch		 = new JoystickButton(pCCI, ELEVATOR_POSITION2_SW_CH);
+	pElevatorPosition3Switch		 = new JoystickButton(pCCI, ELEVATOR_POSITION3_SW_CH);
+	pElevatorPosition4Switch		 = new JoystickButton(pCCI, ELEVATOR_POSITION4_SW_CH);
+	pElevatorPosition5Switch		 = new JoystickButton(pCCI, ELEVATOR_POSITION5_SW_CH);
+	pElevatorPosition6Switch		 = new JoystickButton(pCCI, ELEVATOR_POSITION6_SW_CH);
 
 	//----------------------------------------------------------------------
 	// ROBOT INPUTS
@@ -293,7 +301,7 @@ RecycleRushRobot::RecycleRushRobot()
 	//----------------------------------------------------------------------
 	// Spike Relays (Relay Connections)
 	// lights
-	pCameraLights		 = new CameraLights(CAMERA_LIGHTS_CH);
+//	pCameraLights		 = new CameraLights(CAMERA_LIGHTS_CH);
 
 	// Drive Train
 	pDriveTrain		     = new RobotDrive(LEFT_FRONT_MOTOR_CH,LEFT_REAR_MOTOR_CH,
@@ -307,9 +315,16 @@ RecycleRushRobot::RecycleRushRobot()
 	// INITIALIZE VARIABLES
 	//----------------------------------------------------------------------
 	// Initialize loop and time counters
-	loopCount  = 0;
-	startSec   = 0;
-	elapsedSec = 0;
+	loopCount      = 0;
+	startSec       = 0;
+	elapsedSec     = 0;
+	loopsPerMinute = 0;
+	oldSec         = 0;
+
+	grabberOpen    = true;
+	elevatorTarget = 0;
+	elevatorBase   = 0;
+	elevatorOffset = 0;
 
 	return;
 }
@@ -384,8 +399,12 @@ void RecycleRushRobot::AutonomousInit()
 	startSec   = (int)GetClock();
 	
 	// Set Robot Components to Default Starting Positions
-	pCameraLights->TurnOn();
+//	pCameraLights->TurnOn();
 	pGrabber->OpenGrabber();
+
+	elevatorTarget = pElevator->GetCurrentPosition();
+	elevatorBase   = Elevator::kPosition2;
+	elevatorOffset = Elevator::kGround;
 
 	GetAutoModeSwitches();
 		
@@ -513,19 +532,21 @@ void RecycleRushRobot::TeleopPeriodic()
 
 
 	// Turn camera LED lights on or off based on driver station input
-	if ( lightsOn )
+/*	if ( lightsOn )
 		pCameraLights->TurnOn();
 	else
 		pCameraLights->TurnOff();
-
+*/
 	// Open or Close Brabber based on driver station input
 	if ( grabberOpen )
 		pGrabber->OpenGrabber();
 	else
 		pGrabber->CloseGrabber();
 
-	pElevator->SetTarget(elevatorTarget);
-	pElevator->CheckLimits();
+	if ( pElevAutoSwitch->Get() )
+		pElevator->MoveElevator(elevatorTarget);
+	else
+		pElevator->MoveElevator(elevatorBase, elevatorOffset);
 
 	return;
 }
@@ -552,33 +573,91 @@ void RecycleRushRobot::GetDriverStationInput()
 
 	// Obtain the position of switches on the driver station
 	// Camera Switches
-    lightsOn  				 = pCameraLightSwitch->Get();
+//  lightsOn  				 = pCameraLightSwitch->Get();
 
     // Get grabber position
     grabberOpen				 = pGrabberSwitch->Get();
 
-    if (pElevatorGroundSwitch->Get()){
-    	elevatorTarget = Elevator::kGROUNDPOS;
-    }
-	else if (pElevatorPostition1Switch->Get()){
-		elevatorTarget = Elevator::kBOX1;
-	}
-	else if (pElevatorPostition2Switch->Get()){
-		elevatorTarget = Elevator::kBOX2;
-	}
-	else if (pElevatorPostition3Switch->Get()){
-		elevatorTarget = Elevator::kBOX3;
-	}
-	else if (pElevatorPostition4Switch->Get()){
-		elevatorTarget = Elevator::kBOX4;
-	}
-	else if (pElevatorPostition5Switch->Get()){
-		elevatorTarget = Elevator::kBOX5;
-	}
+    GetElevatorTarget();
 
 #ifdef CONSOLE
     ShowDSValues();
 #endif
+
+	return;
+}
+//------------------------------------------------------------------------------
+// METHOD:  RecycleRushRobot::GetElevatorTarget()
+// Type:	Public accessor for RecycleRushRobot class
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void  RecycleRushRobot::GetElevatorTarget()
+{
+	elevatorTarget = pCCI->GetX();
+
+	GetElevatorBase();
+	GetElevatorOffset();
+
+	return;
+}
+//------------------------------------------------------------------------------
+// METHOD:  RecycleRushRobot::GetElevatorBase()
+// Type:	Public accessor for RecycleRushRobot class
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void RecycleRushRobot::GetElevatorBase()
+{
+    if ( pElevatorPosition1Switch->Get() )
+       	elevatorBase = Elevator::kPosition1;
+    else
+    {
+    	if ( pElevatorPosition2Switch->Get() )
+    		elevatorBase = Elevator::kPosition2;
+    	else
+    	{
+    		if ( pElevatorPosition3Switch->Get() )
+    			elevatorBase = Elevator::kPosition3;
+    		else
+    		{
+    			if ( pElevatorPosition4Switch->Get() )
+    				elevatorBase = Elevator::kPosition4;
+    			else
+    			{
+    				if ( pElevatorPosition5Switch->Get() )
+    					elevatorBase = Elevator::kPosition5;
+    				else
+    				{
+    					if ( pElevatorPosition6Switch->Get() )
+    						elevatorBase = Elevator::kPosition6;
+    				}
+    			}
+    		}
+    	}
+	}
+
+	return;
+}
+//------------------------------------------------------------------------------
+// METHOD:  RecycleRushRobot::GetElevatorOffset()
+// Type:	Public accessor for RecycleRushRobot class
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void RecycleRushRobot::GetElevatorOffset()
+{
+    if ( pElevOffsetGroundSwitch->Get() )
+       	elevatorOffset = Elevator::kGround;
+    else
+    {
+    	if ( pElevOffsetDividerSwitch->Get() )
+    		elevatorOffset = Elevator::kDivider;
+    	else
+    	{
+    		elevatorOffset = Elevator::kBurm;
+    	}
+    }
 
 	return;
 }
@@ -594,8 +673,18 @@ void RecycleRushRobot::ShowDSValues()
 // Show the values for driver station inputs
 
     // Camera Light Switch Value
-	SmartDashboard::PutBoolean("Camera Lights Switch",lightsOn);
-	SmartDashboard::PutBoolean("Grabber Switch",grabberOpen);
+//	SmartDashboard::PutBoolean("Camera Lights Switch",lightsOn);
+	SmartDashboard::PutBoolean("Offset Ground Switch",pElevOffsetGroundSwitch->Get());
+	SmartDashboard::PutBoolean("Offset Divider Switch",pElevOffsetDividerSwitch->Get());
+	SmartDashboard::PutBoolean("Elevator Auto Switch",pElevAutoSwitch->Get());
+	SmartDashboard::PutBoolean("Grabber Switch",pGrabberSwitch->Get());
+	SmartDashboard::PutBoolean("Elevator Position 1",pElevatorPosition1Switch->Get());
+	SmartDashboard::PutBoolean("Elevator Position 2",pElevatorPosition2Switch->Get());
+	SmartDashboard::PutBoolean("Elevator Position 3",pElevatorPosition3Switch->Get());
+	SmartDashboard::PutBoolean("Elevator Position 4",pElevatorPosition4Switch->Get());
+	SmartDashboard::PutBoolean("Elevator Position 5",pElevatorPosition5Switch->Get());
+	SmartDashboard::PutBoolean("Elevator Position 6",pElevatorPosition6Switch->Get());
+	SmartDashboard::PutNumber("Elev Input POT",pCCI->GetX());
 
 	SmartDashboard::PutNumber("Joystick X",pDriveStick->GetX());
 	SmartDashboard::PutNumber("Joystick Y",pDriveStick->GetY());
@@ -630,8 +719,13 @@ void RecycleRushRobot::GetRobotSensorInput()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::ShowRobotValues()
 {
-    SmartDashboard::PutBoolean("Camera Lights",pCameraLights->GetCameraStatus());
+//    SmartDashboard::PutBoolean("Camera Lights",pCameraLights->GetCameraStatus());
     SmartDashboard::PutBoolean("Grabber Position",pGrabber->GetPosition());
+    SmartDashboard::PutNumber("Elev POT Current Position",pElevator->GetCurrentPosition());
+    SmartDashboard::PutNumber("Elev POT Target Position",pElevator->GetPositionTarget());
+    SmartDashboard::PutBoolean("Upper Limit Switch",pElevator->GetUpperLimitSwitch());
+    SmartDashboard::PutBoolean("Lower Limit Switch",pElevator->GetLowerLimitSwitch());
+    SmartDashboard::PutNumber("Elevator Motor Speed",pElevator->GetMotorSpeed());
 
 #ifdef VISION
 	SmartDashboard::PutBoolean("Camera sees bright", pVision->getIsBright());
