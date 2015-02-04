@@ -126,7 +126,8 @@ class RecycleRushRobot : public IterativeRobot
 //		static const uint CAMERA_LIGHTS_CH         = 2;
 
 		// roboRio Solenoid Channels
-		static const uint GRABBER_CH			   = 1;
+		static const uint GRABBER_OPEN_CH          = 0;
+		static const uint GRABBER_CLOSE_CH		   = 1;
 
 		//----------------------------------------------------------------------
 		// CONSTANTS USED TO DETERMINE STATUS OF DRIVER STATION AND ROBOT INPUTS
@@ -135,7 +136,8 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		// CONSTANTS USED IN DECLARING OBJECTS
 		//----------------------------------------------------------------------
-
+        const double DS_POT_UPPER_LIMIT    		   = 5.0;
+        const double DS_POT_LOWER_LIMIT     	   = 0.0;
 		//----------------------------------------------------------------------
 		// AUTONOMOUS MODE ROBOT CONTROL CONSTANTS (OUTPUTS)
 		//----------------------------------------------------------------------
@@ -307,7 +309,7 @@ RecycleRushRobot::RecycleRushRobot()
 	pDriveTrain		     = new RobotDrive(LEFT_FRONT_MOTOR_CH,LEFT_REAR_MOTOR_CH,
 									      RIGHT_FRONT_MOTOR_CH,RIGHT_REAR_MOTOR_CH);
 
-	pGrabber 			 = new Grabber(GRABBER_CH);
+	pGrabber 			 = new Grabber(GRABBER_OPEN_CH, GRABBER_CLOSE_CH);
 
 	pElevator			 = new Elevator(ELEVATOR_MOTOR_CH, ELEVATOR_POT_CH,TOP_LIMIT_SW_CH,BOTTOM_LIMIT_SW_CH );
 	
@@ -354,6 +356,8 @@ void RecycleRushRobot::RobotInit()
 #ifdef CONSOLE
 	SmartDashboard::init();
 #endif
+
+	pElevator->SetInputPotRange(DS_POT_LOWER_LIMIT, DS_POT_UPPER_LIMIT);
 
 	return;
 }
