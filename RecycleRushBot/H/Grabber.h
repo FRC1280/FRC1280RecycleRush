@@ -14,14 +14,14 @@ class Grabber
 		static const bool kGrabberOpen    = true;
 		static const bool kGrabberClosed  = false;
 
-		Grabber(uint grabberChannel);
+		Grabber(uint grabberOpenCh, uint grabberCloseCh);
 		~Grabber();
 
 		void  OpenGrabber();
 		void  CloseGrabber();
 		bool  GetPosition() const;
 	protected:
-		Solenoid *pGrabberSolenoid;
+		DoubleSolenoid *pGrabberSolenoid;
 
 		bool   grabberPosition;
 };
