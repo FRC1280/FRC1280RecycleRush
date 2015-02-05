@@ -22,53 +22,53 @@ class Elevator
 		Elevator(uint elevMotorCh, uint elevPotCh, uint upperLimitSwCh, uint lowerLimitSwCh);
 		~Elevator();
 
-		void   SetInputPotRange(double minPotValue, double maxPotValue);  // DONE
-		bool   MoveElevator(double inputPotReading);                      // DONE
+		void   SetInputPotRange(double minPotValue, double maxPotValue);
+		bool   MoveElevator(double inputPotReading);
 		bool   MoveElevator(uint inputTarget, uint inputOffset);
-		float  GetMotorSpeed() const;                                     // DONE
-		double GetCurrentPosition() const;                                // DONE
-		double GetPositionTarget() const;                                 // DONE
-		double GetPositionTargetInput() const;                            // DONE
-		bool   GetUpperLimitSwitch() const;                               // DONE
-		bool   GetLowerLimitSwitch() const;                               // DONE
+		float  GetMotorSpeed() const;
+		double GetCurrentPosition() const;
+		double GetPositionTarget() const;
+		double GetPositionTargetInput() const;
+		bool   GetUpperLimitSwitch() const;
+		bool   GetLowerLimitSwitch() const;
 
 	private:
-		const float   MOTOR_SPEED_UP            =  0.10;
-		const float   MOTOR_SPEED_DOWN          = -0.10;
+		const float   MOTOR_SPEED_UP            =  0.10;   // CONFIGURE
+		const float   MOTOR_SPEED_DOWN          = -0.10;   // CONFIGURE
 		const float   ALL_STOP                  =  0.0;
 
-		const double  DEFAULT_INPUT_UPPER_LIMIT =  5.0;
-		const double  DEFAULT_INPUT_LOWER_LIMIT =  0.0;
-		const double  ELEV_POS_UPPER_LIMIT      =  5.0;
-		const double  ELEV_POS_LOWER_LIMIT      =  0.0;
-		const double  TARGET_TOLERANCE          =  0.02;
+		const double  DEFAULT_INPUT_UPPER_LIMIT =  5.0;    // CONFIGURE
+		const double  DEFAULT_INPUT_LOWER_LIMIT =  0.0;    // CONFIGURE
+		const double  ELEV_POS_UPPER_LIMIT      = 50.0;    // CONFIGURE
+		const double  ELEV_POS_LOWER_LIMIT      = 10.0;    // CONFIGURE
+		const double  TARGET_TOLERANCE          =  1.0;    // CONFIGURE
 
-		const double  POSITION1_BASE_TARGET     =  0.0;
-		const double  POSITION2_BASE_TARGET     =  1.0;
-		const double  POSITION3_BASE_TARGET     =  2.0;
-		const double  POSITION4_BASE_TARGET     =  3.0;
-		const double  POSITION5_BASE_TARGET     =  4.0;
-		const double  POSITION6_BASE_TARGET     =  5.0;
+		const double  POSITION1_BASE_TARGET     = 10.0;    // CONFIGURE
+		const double  POSITION2_BASE_TARGET     = 16.0;    // CONFIGURE
+		const double  POSITION3_BASE_TARGET     = 22.0;    // CONFIGURE
+		const double  POSITION4_BASE_TARGET     = 28.0;    // CONFIGURE
+		const double  POSITION5_BASE_TARGET     = 34.0;    // CONFIGURE
+		const double  POSITION6_BASE_TARGET     = 40.0;    // CONFIGURE
 		const double  OFFSET_GROUND             =  0.0;
-		const double  OFFSET_BURM               =  1.0;
-		const double  OFFSET_DIVIDER            =  2.0;
+		const double  OFFSET_BURM               =  2.0;    // CONFIGURE
+		const double  OFFSET_DIVIDER            =  4.0;    // CONFIGURE
 
 		const bool    PID_CONTROLLER_ON         =  true;
 		const bool    PID_CONTROLLER_OFF        =  false;
 
-		const double  POT_FULL_RANGE            =  5.0;
-		const double  POT_OFFSET                =  0.0;
+		const double  POT_FULL_RANGE            = 75.0;    // CONFIGURE
+		const double  POT_OFFSET                =  0.0;    // CONFIGURE
 
 		const float kP=27.9237; //PID controller constants
 		const float kI=0;
 		const float kD=0; //these will need to be set to the right values
 
-		void   CalcTargetRatioConstant();                  // DONE
-		double CalcTargetPotValue(double inputPotValue);   // DONE
+		void   CalcTargetRatioConstant();
+		double CalcTargetPotValue(double inputPotValue);
 		double CalcBaseTarget(uint basePosition);
 		double CalcOffsetTarget(uint offsetPosition);
-		bool   GoToPotTargetNoPID(double potTarget);       // DONE
-		bool   GoToPotTargetPID(double potTarget);         // DONE
+		bool   GoToPotTargetNoPID(double potTarget);
+		bool   GoToPotTargetPID(double potTarget);
 
 		Talon               *pElevatorMotor;
 		AnalogPotentiometer *pElevatorPot;
@@ -82,7 +82,7 @@ class Elevator
 		double              targetConstant;
 		double              targetInput;
 		double              elevatorTarget;
-		bool                usePIDController = PID_CONTROLLER_OFF;
+		bool                usePIDController = PID_CONTROLLER_OFF;  // CONFIGURE
 };
 
 #endif
