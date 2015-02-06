@@ -1,15 +1,14 @@
 #include "../H/Grabber.h"
 
-//------------------------------------------------------------------------------
 // METHOD:  Grabber::Grabber()
 // Type:	Constructor
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-Grabber::Grabber(uint grabberChannel)
+Grabber::Grabber(uint grabberOpenCh, uint grabberCloseCh)
 {
 
-	pGrabberSolenoid = new Solenoid(grabberChannel);
+	pGrabberSolenoid = new DoubleSolenoid(grabberOpenCh, grabberCloseCh);
 
 	OpenGrabber();
 }
@@ -31,7 +30,7 @@ Grabber::~Grabber()
 //------------------------------------------------------------------------------
 void  Grabber::OpenGrabber()
 {
-	pGrabberSolenoid->Set(true);
+	pGrabberSolenoid->Set(DoubleSolenoid::kForward);
 
 	grabberPosition = kGrabberOpen;
 
@@ -45,7 +44,7 @@ void  Grabber::OpenGrabber()
 //------------------------------------------------------------------------------
 void  Grabber::CloseGrabber()
 {
-	pGrabberSolenoid->Set(false);
+	pGrabberSolenoid->Set(DoubleSolenoid::kReverse);
 
 	grabberPosition = kGrabberClosed;
 
