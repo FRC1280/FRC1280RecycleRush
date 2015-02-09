@@ -766,6 +766,7 @@ void RecycleRushRobot::ShowRobotValues()
     SmartDashboard::PutNumber("Elev POT Target Position",pElevator->GetPositionTarget());
     SmartDashboard::PutBoolean("Upper Limit Switch",pElevator->GetUpperLimitSwitch());
     SmartDashboard::PutBoolean("Lower Limit Switch",pElevator->GetLowerLimitSwitch());
+    SmartDashboard::PutBoolean("Using PID Controller",pElevator->GetControlType());
     SmartDashboard::PutNumber("Elevator Target Motor Speed",pElevator->GetTargetMotorSpeed());
     SmartDashboard::PutNumber("Elevator Motor Speed",pElevator->GetMotorSpeed());
 
