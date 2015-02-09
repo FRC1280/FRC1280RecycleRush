@@ -91,8 +91,8 @@ class RecycleRushRobot : public IterativeRobot
 		static const uint USE_ROBOT_ORIENT_BUTTON   = 12;
 
 		// Driver Station CCI Channels (Uses joystick button references)
-	    static const uint OFFSET_GROUND_SW_CH       =  1;
-		static const uint OFFSET_DIVIDER_SW_CH      =  2;
+		static const uint OFFSET_DIVIDER_SW_CH      =  1;
+	    static const uint OFFSET_GROUND_SW_CH       =  2;
 		static const uint ELEV_AUTO_MAN_SW_CH       =  3;
 		static const uint GRABBER_SW_CH			    =  4;
 		static const uint ELEVATOR_POSITION1_SW_CH  =  5;
@@ -114,7 +114,7 @@ class RecycleRushRobot : public IterativeRobot
 		static const uint BOTTOM_LIMIT_SW_CH	   =  1;
 
 		// roboRio Analog Channels
-		static const uint ELEVATOR_POT_CH		   =  1;
+		static const uint ELEVATOR_POT_CH		   =  0;
 		//static const uint DRIVE_GYRO_CH			   =  2;
 
 		// navX MXP Inertial Measurement Unit (IMU) Constants
@@ -146,8 +146,8 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		// CONSTANTS USED IN DECLARING OBJECTS
 		//----------------------------------------------------------------------
-        const double DS_POT_UPPER_LIMIT    		   = 5.0;
-        const double DS_POT_LOWER_LIMIT     	   = 0.0;
+        const double DS_POT_UPPER_LIMIT    		   =  1.0;
+        const double DS_POT_LOWER_LIMIT     	   = -1.0;
 		//----------------------------------------------------------------------
 		// AUTONOMOUS MODE ROBOT CONTROL CONSTANTS (OUTPUTS)
 		//----------------------------------------------------------------------
@@ -176,7 +176,7 @@ class RecycleRushRobot : public IterativeRobot
 		Joystick         *pCCI;                 // CCI
 		JoystickButton   *pElevOffsetGroundSwitch;       // CCI Digital Inputs
 		JoystickButton   *pElevOffsetDividerSwitch;
-		JoystickButton   *pElevAutoSwitch;
+		JoystickButton   *pElevManualSwitch;
 		JoystickButton	 *pGrabberSwitch;
 		JoystickButton   *pElevatorPosition1Switch;
 		JoystickButton   *pElevatorPosition2Switch;
@@ -302,7 +302,7 @@ RecycleRushRobot::RecycleRushRobot()
     pElevOffsetGroundSwitch          = new JoystickButton(pCCI,OFFSET_GROUND_SW_CH);
     pElevOffsetDividerSwitch         = new JoystickButton(pCCI,OFFSET_DIVIDER_SW_CH);
 	pGrabberSwitch		 			 = new JoystickButton(pCCI,GRABBER_SW_CH);
-	pElevAutoSwitch	        	     = new JoystickButton(pCCI,ELEV_AUTO_MAN_SW_CH);
+	pElevManualSwitch	        	 = new JoystickButton(pCCI,ELEV_AUTO_MAN_SW_CH);
 	pElevatorPosition1Switch		 = new JoystickButton(pCCI,ELEVATOR_POSITION1_SW_CH);
 	pElevatorPosition2Switch		 = new JoystickButton(pCCI,ELEVATOR_POSITION2_SW_CH);
 	pElevatorPosition3Switch		 = new JoystickButton(pCCI,ELEVATOR_POSITION3_SW_CH);
@@ -574,7 +574,7 @@ void RecycleRushRobot::TeleopPeriodic()
 	else
 		pGrabber->CloseGrabber();
 
-	if ( pElevAutoSwitch->Get() )
+	if ( pElevManualSwitch->Get() )
 		pElevator->MoveElevator(elevatorTarget);
 	else
 		pElevator->MoveElevator(elevatorBase, elevatorOffset);
@@ -646,27 +646,27 @@ void  RecycleRushRobot::GetElevatorTarget()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::GetElevatorBase()
 {
-    if ( pElevatorPosition1Switch->Get() )
+    if ( !pElevatorPosition1Switch->Get() )
        	elevatorBase = Elevator::kPosition1;
     else
     {
-    	if ( pElevatorPosition2Switch->Get() )
+    	if ( !pElevatorPosition2Switch->Get() )
     		elevatorBase = Elevator::kPosition2;
     	else
     	{
-    		if ( pElevatorPosition3Switch->Get() )
+    		if ( !pElevatorPosition3Switch->Get() )
     			elevatorBase = Elevator::kPosition3;
     		else
     		{
-    			if ( pElevatorPosition4Switch->Get() )
+    			if ( !pElevatorPosition4Switch->Get() )
     				elevatorBase = Elevator::kPosition4;
     			else
     			{
-    				if ( pElevatorPosition5Switch->Get() )
+    				if ( !pElevatorPosition5Switch->Get() )
     					elevatorBase = Elevator::kPosition5;
     				else
     				{
-    					if ( pElevatorPosition6Switch->Get() )
+    					if ( !pElevatorPosition6Switch->Get() )
     						elevatorBase = Elevator::kPosition6;
     				}
     			}
@@ -715,7 +715,7 @@ void RecycleRushRobot::ShowDSValues()
 	SmartDashboard::PutBoolean("Camera Lights Switch",lightsOn);
 	SmartDashboard::PutBoolean("Offset Ground Switch",pElevOffsetGroundSwitch->Get());
 	SmartDashboard::PutBoolean("Offset Divider Switch",pElevOffsetDividerSwitch->Get());
-	SmartDashboard::PutBoolean("Elevator Auto Switch",pElevAutoSwitch->Get());
+	SmartDashboard::PutBoolean("Elevator Manual Switch",pElevManualSwitch->Get());
 	SmartDashboard::PutBoolean("Grabber Switch",pGrabberSwitch->Get());
 	SmartDashboard::PutBoolean("Elevator Position 1",pElevatorPosition1Switch->Get());
 	SmartDashboard::PutBoolean("Elevator Position 2",pElevatorPosition2Switch->Get());
@@ -766,6 +766,7 @@ void RecycleRushRobot::ShowRobotValues()
     SmartDashboard::PutNumber("Elev POT Target Position",pElevator->GetPositionTarget());
     SmartDashboard::PutBoolean("Upper Limit Switch",pElevator->GetUpperLimitSwitch());
     SmartDashboard::PutBoolean("Lower Limit Switch",pElevator->GetLowerLimitSwitch());
+    SmartDashboard::PutNumber("Elevator Target Motor Speed",pElevator->GetTargetMotorSpeed());
     SmartDashboard::PutNumber("Elevator Motor Speed",pElevator->GetMotorSpeed());
 
 #ifdef VISION

@@ -25,6 +25,8 @@ class Elevator
 		void   SetInputPotRange(double minPotValue, double maxPotValue);
 		bool   MoveElevator(double inputPotReading);
 		bool   MoveElevator(uint inputTarget, uint inputOffset);
+		bool   GetControlType() const;
+		float  GetTargetMotorSpeed() const;
 		float  GetMotorSpeed() const;
 		double GetCurrentPosition() const;
 		double GetPositionTarget() const;
@@ -33,25 +35,25 @@ class Elevator
 		bool   GetLowerLimitSwitch() const;
 
 	private:
-		const float   MOTOR_SPEED_UP            =  0.10;   // CONFIGURE
-		const float   MOTOR_SPEED_DOWN          = -0.10;   // CONFIGURE
+		const float   MOTOR_SPEED_UP            =  0.20;   // CONFIGURE
+		const float   MOTOR_SPEED_DOWN          = -0.20;   // CONFIGURE
 		const float   ALL_STOP                  =  0.0;
 
 		const double  DEFAULT_INPUT_UPPER_LIMIT =  5.0;    // CONFIGURE
 		const double  DEFAULT_INPUT_LOWER_LIMIT =  0.0;    // CONFIGURE
-		const double  ELEV_POS_UPPER_LIMIT      = 50.0;    // CONFIGURE
-		const double  ELEV_POS_LOWER_LIMIT      = 10.0;    // CONFIGURE
-		const double  TARGET_TOLERANCE          =  1.0;    // CONFIGURE
+		const double  ELEV_POS_UPPER_LIMIT      = 72.0;    // CONFIGURE
+		const double  ELEV_POS_LOWER_LIMIT      = 18.75;   // CONFIGURE
+		const double  TARGET_TOLERANCE          =  0.25;   // CONFIGURE
 
-		const double  POSITION1_BASE_TARGET     = 10.0;    // CONFIGURE
-		const double  POSITION2_BASE_TARGET     = 16.0;    // CONFIGURE
-		const double  POSITION3_BASE_TARGET     = 22.0;    // CONFIGURE
-		const double  POSITION4_BASE_TARGET     = 28.0;    // CONFIGURE
-		const double  POSITION5_BASE_TARGET     = 34.0;    // CONFIGURE
-		const double  POSITION6_BASE_TARGET     = 40.0;    // CONFIGURE
+		const double  POSITION1_BASE_TARGET     = 18.75;   // CONFIGURE
+		const double  POSITION2_BASE_TARGET     = 22.75;    // CONFIGURE
+		const double  POSITION3_BASE_TARGET     = 34.75;    // CONFIGURE
+		const double  POSITION4_BASE_TARGET     = 46.75;   // CONFIGURE
+		const double  POSITION5_BASE_TARGET     = 58.75;    // CONFIGURE
+		const double  POSITION6_BASE_TARGET     = 70.0;    // CONFIGURE
 		const double  OFFSET_GROUND             =  0.0;
 		const double  OFFSET_BURM               =  2.0;    // CONFIGURE
-		const double  OFFSET_DIVIDER            =  4.0;    // CONFIGURE
+		const double  OFFSET_DIVIDER            =  6.0;    // CONFIGURE
 
 		const bool    PID_CONTROLLER_ON         =  true;
 		const bool    PID_CONTROLLER_OFF        =  false;
@@ -82,7 +84,8 @@ class Elevator
 		double              targetConstant;
 		double              targetInput;
 		double              elevatorTarget;
-		bool                usePIDController = PID_CONTROLLER_OFF;  // CONFIGURE
+		float               targetMotorSpeed;
+		bool                usePIDController;
 };
 
 #endif
