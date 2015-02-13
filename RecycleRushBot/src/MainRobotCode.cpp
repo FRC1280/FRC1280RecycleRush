@@ -110,12 +110,15 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 
 		// roboRio GPIO Channels
-		static const uint TOP_LIMIT_SW_CH		   =  0;
-		static const uint BOTTOM_LIMIT_SW_CH	   =  1;
+		static const uint TOP_LIMIT_SW_CH		     =  0;
+		static const uint BOTTOM_LIMIT_SW_CH	     =  1;
+		static const uint AUTO_MODE_OFF_SW_CH        =  2;
+		static const uint AUTO_MODE_GET_PIECES_SW_CH =  3;
+		static const uint AUTO_MODE_GET_BIN_SW_CH    =  4;
+		static const uint AUTO_MODE_STACK_BINS_SW_CH =  5;
 
 		// roboRio Analog Channels
 		static const uint ELEVATOR_POT_CH		   =  0;
-		//static const uint DRIVE_GYRO_CH			   =  2;
 
 		// navX MXP Inertial Measurement Unit (IMU) Constants
 		static const uint8_t IMU_UPDATE_RATE       = 50;
@@ -198,6 +201,10 @@ class RecycleRushRobot : public IterativeRobot
 		// Robot Digital Inputs - GPIO Inputs including Encoders
 		//----------------------------------------------------------------------
 		// Autonomous Mode Switches
+		DigitalInput    *pAutoModeOffSwitch;
+		DigitalInput    *pAutoModeGetPiecesSwitch;
+		DigitalInput    *pAutoModeGetBinSwitch;
+		DigitalInput    *pAutoModeStackBinsSwitch;
 	
 		//----------------------------------------------------------------------
 		// Robot Digital Outputs - Relays (Spikes)
@@ -316,6 +323,10 @@ RecycleRushRobot::RecycleRushRobot()
 	//----------------------------------------------------------------------
 	// GPIO & Spare Power Inputs
 	// - Autonomous Mode Switches
+	pAutoModeOffSwitch       = new DigitalInput(AUTO_MODE_OFF_SW_CH);
+	pAutoModeGetPiecesSwitch = new DigitalInput(AUTO_MODE_GET_PIECES_SW_CH);
+	pAutoModeGetBinSwitch    = new DigitalInput(AUTO_MODE_GET_BIN_SW_CH);
+	pAutoModeStackBinsSwitch = new DigitalInput(AUTO_MODE_STACK_BINS_SW_CH);
 	
 	// navX MXP Intertial Measurement Unit (IMU)
 	pIMUPort             = new SerialPort(57600,SerialPort::kMXP);
@@ -436,7 +447,9 @@ void RecycleRushRobot::AutonomousInit()
 	elevatorOffset = Elevator::kGround;        // Configure
 
 	GetAutoModeSwitches();
-		
+	GetRobotSensorInput();
+	ShowAMStatus();
+
 	return;
 }
 //------------------------------------------------------------------------------
@@ -488,10 +501,8 @@ void RecycleRushRobot::DisabledPeriodic()
 	elapsedSec = (int)GetClock() - startSec;
 	
 	GetAutoModeSwitches();
-
-#ifdef CONSOLE
-	ShowRobotValues();
-#endif
+	GetRobotSensorInput();
+	ShowAMStatus();
 
 	return;
 }
@@ -513,7 +524,6 @@ void RecycleRushRobot::AutonomousPeriodic()
 	elapsedSec = (int)GetClock() - startSec;
 
 	GetRobotSensorInput();
-	
 	ShowAMStatus();
 	
 	RunAutonomousMode();
@@ -758,7 +768,12 @@ void RecycleRushRobot::GetRobotSensorInput()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::ShowRobotValues()
 {
-    SmartDashboard::PutBoolean("IMU Calibrating",pIMU->IsCalibrating());
+	SmartDashboard::PutBoolean("AM Off Switch",pAutoModeOffSwitch->Get());
+	SmartDashboard::PutBoolean("AM Get Pieces Switch",pAutoModeGetPiecesSwitch->Get());
+	SmartDashboard::PutBoolean("AM Get Bin Switch",pAutoModeGetBinSwitch->Get());
+	SmartDashboard::PutBoolean("AM Stack Pieces Switch",pAutoModeStackBinsSwitch->Get());
+
+	SmartDashboard::PutBoolean("IMU Calibrating",pIMU->IsCalibrating());
     SmartDashboard::PutNumber("IMU Gyro Angle",pIMU->GetCompassHeading());
 	SmartDashboard::PutBoolean("Camera Lights",pCameraLights->GetCameraStatus());
     SmartDashboard::PutBoolean("Grabber Position",pGrabber->GetPosition());
@@ -785,6 +800,8 @@ void RecycleRushRobot::ShowRobotValues()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::GetAutoModeSwitches()
 {
+
+
 	return;
 }
 //------------------------------------------------------------------------------
@@ -820,5 +837,6 @@ void RecycleRushRobot::RunAutonomousMode()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::ShowAMStatus()
 {
+
 	return;
 }
