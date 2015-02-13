@@ -13,33 +13,7 @@ Vision::Vision(void)
 
 void Vision::getImage(void)
 {
-	int i;
-
-	HSLImage *image;
-
-	int brightSum=0;
-	Point pixel;
-	PixelValue value;
-
-	//isBright=1;
-
-	image = new HSLImage;
-
-	camera->GetImage(image->GetImaqImage());
-
-	for (i=0; i<400; ++i)
-	{
-		pixel.x=rand()%40;
-		pixel.y=rand()%40;
-
-		frcGetPixelValue (image->GetImaqImage(), pixel, &value);
-
-		brightSum+=value.hsl.L-64;
-	}
-
-	delete image;
-
-	isBright=(brightSum>0);
+	//camera->GetImage(image->GetImaqImage());
 }
 
 #endif
@@ -85,24 +59,21 @@ void Vision::getImage(void)
 
 void Vision::processImage ()
 {
+	/*image = new HSLImage;
+
 	getImage();
 
-	const int xIncrement=5; //the number of pixels to move x while first searching for the target
-	const int yIncrement=5; //the number of pixels to move y
-	int x, y;
+	isBright=0;
 
 	if (image)
 	{
-
-		x=0; y=0;
-
-//		while (getPix)
+		isBright=1;
 
 		delete image;
-	}
+	}*/
 }
 
-inline bool Vision::checkPix(int x, int y) //checks to see if a pixel fits the criteria
+/*inline bool Vision::checkPix(int x, int y) //checks to see if a pixel fits the criteria
 {
 	bool output=1;
 
@@ -142,4 +113,4 @@ inline HSLValue Vision::getPix(int x, int y)
 	frcGetPixelValue (image->GetImaqImage(), pixel, &value);
 
 	return value.hsl;
-}
+}*/

@@ -89,6 +89,8 @@ class RecycleRushRobot : public IterativeRobot
 		// Joystick Buttons
 		static const uint USE_FIELD_ORIENT_BUTTON   =  8;
 		static const uint USE_ROBOT_ORIENT_BUTTON   = 12;
+		static const uint RESET_COMPASS_1_BUTTON    =  9;
+		static const uint RESET_COMPASS_2_BUTTON    = 11;
 
 		// Driver Station CCI Channels (Uses joystick button references)
 		static const uint OFFSET_DIVIDER_SW_CH      =  1;
@@ -112,6 +114,8 @@ class RecycleRushRobot : public IterativeRobot
 		// roboRio GPIO Channels
 		static const uint TOP_LIMIT_SW_CH		     =  0;
 		static const uint BOTTOM_LIMIT_SW_CH	     =  1;
+		static const uint TOP_LIMIT_SW_CH		     =  0;
+		static const uint BOTTOM_LIMIT_SW_CH	     =  1;
 		static const uint AUTO_MODE_OFF_SW_CH        =  2;
 		static const uint AUTO_MODE_GET_PIECES_SW_CH =  3;
 		static const uint AUTO_MODE_GET_BIN_SW_CH    =  4;
@@ -119,6 +123,7 @@ class RecycleRushRobot : public IterativeRobot
 
 		// roboRio Analog Channels
 		static const uint ELEVATOR_POT_CH		   =  0;
+		//static const uint DRIVE_GYRO_CH			   =  2;
 
 		// navX MXP Inertial Measurement Unit (IMU) Constants
 		static const uint8_t IMU_UPDATE_RATE       = 50;
@@ -174,6 +179,8 @@ class RecycleRushRobot : public IterativeRobot
 		// Joystick Buttons
 		JoystickButton   *pUseFieldOrientButton;
 		JoystickButton   *pUseRobotOrientButton;
+		JoystickButton   *pResetCompass1Button;
+		JoystickButton   *pResetCompass2Button;
 
 		// eStop Robotics Custom Control Interface (CCI)
 		Joystick         *pCCI;                 // CCI
@@ -304,6 +311,8 @@ RecycleRushRobot::RecycleRushRobot()
     // Joystick Buttons
 	pUseFieldOrientButton            = new JoystickButton(pDriveStick,USE_FIELD_ORIENT_BUTTON);
 	pUseRobotOrientButton            = new JoystickButton(pDriveStick,USE_ROBOT_ORIENT_BUTTON);
+	pResetCompass1Button             = new JoystickButton(pDriveStick,RESET_COMPASS_1_BUTTON);
+	pResetCompass2Button             = new JoystickButton(pDriveStick,RESET_COMPASS_2_BUTTON);
 
 	// CCI Switches
     pElevOffsetGroundSwitch          = new JoystickButton(pCCI,OFFSET_GROUND_SW_CH);
@@ -439,6 +448,7 @@ void RecycleRushRobot::AutonomousInit()
 	startSec   = (int)GetClock();
 	
 	// Set Robot Components to Default Starting Positions
+	pIMU->ZeroYaw();
 	pCameraLights->TurnOn();                   // Configure
 	pGrabber->OpenGrabber();                   // Configure
 
@@ -504,6 +514,10 @@ void RecycleRushRobot::DisabledPeriodic()
 	GetRobotSensorInput();
 	ShowAMStatus();
 
+#ifdef CONSOLE
+	ShowRobotValues();
+#endif
+
 	return;
 }
 //------------------------------------------------------------------------------
@@ -524,6 +538,7 @@ void RecycleRushRobot::AutonomousPeriodic()
 	elapsedSec = (int)GetClock() - startSec;
 
 	GetRobotSensorInput();
+	
 	ShowAMStatus();
 	
 	RunAutonomousMode();
@@ -568,7 +583,7 @@ void RecycleRushRobot::TeleopPeriodic()
 
 	//Set Drive Speed and drive mode with or without field orientation
 	if ( fieldOrientationOn )
-		pDriveTrain->MecanumDrive_Cartesian (pDriveStick->GetX(), pDriveStick->GetY(), pDriveStick->GetTwist(),pIMU->GetCompassHeading());
+		pDriveTrain->MecanumDrive_Cartesian (pDriveStick->GetX(), pDriveStick->GetY(), pDriveStick->GetTwist(),pIMU->GetYaw());
 	else
 		pDriveTrain->MecanumDrive_Cartesian (pDriveStick->GetX(), pDriveStick->GetY(), pDriveStick->GetTwist());
 
@@ -618,6 +633,9 @@ void RecycleRushRobot::GetDriverStationInput()
 	else
 		if ( pUseRobotOrientButton->Get() )
 			fieldOrientationOn = false;
+
+	if ( pResetCompass1Button->Get() && pResetCompass2Button->Get() )
+		pIMU->ZeroYaw();
 
 	// Camera Switches
     lightsOn  				 = pCameraLightSwitch->Get();
@@ -721,6 +739,8 @@ void RecycleRushRobot::ShowDSValues()
 
 	SmartDashboard::PutBoolean("Field Orient Button",pUseFieldOrientButton->Get());
 	SmartDashboard::PutBoolean("Robot Orient Button",pUseRobotOrientButton->Get());
+//	SmartDashboard::PutBoolean("Reset Compass Button 9",pResetCompass1Button->Get());
+//	SmartDashboard::PutBoolean("Reset Compass Button 11",pResetCompass2Button->Get());
 	SmartDashboard::PutBoolean("Use Field Orientation",fieldOrientationOn);
 	SmartDashboard::PutBoolean("Camera Lights Switch",lightsOn);
 	SmartDashboard::PutBoolean("Offset Ground Switch",pElevOffsetGroundSwitch->Get());
@@ -772,9 +792,12 @@ void RecycleRushRobot::ShowRobotValues()
 	SmartDashboard::PutBoolean("AM Get Pieces Switch",pAutoModeGetPiecesSwitch->Get());
 	SmartDashboard::PutBoolean("AM Get Bin Switch",pAutoModeGetBinSwitch->Get());
 	SmartDashboard::PutBoolean("AM Stack Pieces Switch",pAutoModeStackBinsSwitch->Get());
-
+	SmartDashboard::PutBoolean("IMU Connected",pIMU->IsConnected());
 	SmartDashboard::PutBoolean("IMU Calibrating",pIMU->IsCalibrating());
-    SmartDashboard::PutNumber("IMU Gyro Angle",pIMU->GetCompassHeading());
+	SmartDashboard::PutNumber("IMU Gyro Angle",pIMU->GetCompassHeading());
+	SmartDashboard::PutNumber("IMU Yaw",pIMU->GetYaw());
+	SmartDashboard::PutNumber("IMU Pitch",pIMU->GetPitch());
+	SmartDashboard::PutNumber("IMU Roll",pIMU->GetRoll());
 	SmartDashboard::PutBoolean("Camera Lights",pCameraLights->GetCameraStatus());
     SmartDashboard::PutBoolean("Grabber Position",pGrabber->GetPosition());
     SmartDashboard::PutNumber("Elev POT Current Position",pElevator->GetCurrentPosition());
@@ -800,8 +823,6 @@ void RecycleRushRobot::ShowRobotValues()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::GetAutoModeSwitches()
 {
-
-
 	return;
 }
 //------------------------------------------------------------------------------
@@ -837,6 +858,5 @@ void RecycleRushRobot::RunAutonomousMode()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::ShowAMStatus()
 {
-
 	return;
 }
