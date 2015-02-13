@@ -10,9 +10,12 @@ Elevator::Elevator(uint elevMotorCh, uint elevPotCh, uint upperLimitSwCh, uint l
 	pPIDController    = new PIDController(kP, kI, kD, pElevatorPot, pElevatorMotor);
 
 	// Initialize class variables
-	targetRatio    = 0.0;
-	targetConstant = 0.0;
-	elevatorTarget = 0.0;
+	targetRatio      = 0.0;
+	targetConstant   = 0.0;
+	elevatorTarget   = 0.0;
+	targetMotorSpeed = 0.0;
+
+	usePIDController = PID_CONTROLLER_OFF;  // CONFIGURE
 
 	// Configure PID Controller
 	pPIDController->SetInputRange(ELEV_POS_LOWER_LIMIT,ELEV_POS_UPPER_LIMIT);
@@ -87,10 +90,10 @@ bool  Elevator::MoveElevator(uint inputTarget, uint inputOffset)
 	double baseTarget   = 0;
 	double offsetTarget = 0;
 
-	targetInput = 9999999;
+	targetInput    = 9999999;   // Set to 9999999 when moving elevator to predefined position
 
-	baseTarget = CalcBaseTarget(inputTarget);
-	offsetTarget = CalcOffsetTarget(inputOffset);
+	baseTarget     = CalcBaseTarget(inputTarget);
+	offsetTarget   = CalcOffsetTarget(inputOffset);
 
 	elevatorTarget = baseTarget + offsetTarget;
 
@@ -104,6 +107,27 @@ bool  Elevator::MoveElevator(uint inputTarget, uint inputOffset)
 	}
 
 	return targetFound;
+}
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::GetControlType()
+// Type:	Public accessor method
+//------------------------------------------------------------------------------
+// Returns the current targeted elevator motor speed.
+//------------------------------------------------------------------------------
+bool   Elevator::GetControlType() const
+{
+	return usePIDController;
+}
+
+//------------------------------------------------------------------------------
+// METHOD:  Elevator::GetTargetMotorSpeed()
+// Type:	Public accessor method
+//------------------------------------------------------------------------------
+// Returns the current targeted elevator motor speed.
+//------------------------------------------------------------------------------
+float  Elevator::GetTargetMotorSpeed() const
+{
+	return targetMotorSpeed;
 }
 //------------------------------------------------------------------------------
 // METHOD:  Elevator::GetMotorSpeed()
@@ -284,6 +308,8 @@ bool  Elevator::GoToPotTargetPID(double inputPotValue)
 {
 	bool targetHit = false;
 
+	targetMotorSpeed = 9999999;  // Set to 9999999 when using the PID controller (PID sets the target motor speed)
+
 	pPIDController->SetSetpoint(inputPotValue);
 	pPIDController->Enable();
 
@@ -337,33 +363,38 @@ bool  Elevator::GoToPotTargetNoPID(double inputPotValue)
 		 pElevatorPot->Get() <= targetHighValue )
 	{
 		pElevatorMotor->Set(ALL_STOP);
+		targetMotorSpeed = ALL_STOP;
 		potTargetFound = true;
 	}
 	else
 	{
-		if ( pElevatorPot->Get() > targetHighValue )
+		if ( pElevatorPot->Get() > targetHighValue )  // Elevator moving down
 		{
-			if ( pLowerLimitHit )
+			if ( pLowerLimitHit->Get() )  // If lower limit switch is hit, stop motors
 			{
 				pElevatorMotor->Set(ALL_STOP);
+				targetMotorSpeed = ALL_STOP;
 				potTargetFound = true;
 			}
 			else
 			{
 				pElevatorMotor->Set(MOTOR_SPEED_DOWN);
+				targetMotorSpeed = MOTOR_SPEED_DOWN;
 			}
 		}
 		else
-			if ( pElevatorPot->Get() < targetLowValue )
+			if ( pElevatorPot->Get() < targetLowValue )  // Elevator moving up
 			{
-				if ( pUpperLimitHit )
+				if ( pUpperLimitHit->Get() )  // If upper limit switch is hit, stop motors
 				{
 					pElevatorMotor->Set(ALL_STOP);
+					targetMotorSpeed = ALL_STOP;
 					potTargetFound = true;
 				}
 				else
 				{
 					pElevatorMotor->Set(MOTOR_SPEED_UP);
+					targetMotorSpeed = MOTOR_SPEED_UP;
 				}
 			}
 	}
