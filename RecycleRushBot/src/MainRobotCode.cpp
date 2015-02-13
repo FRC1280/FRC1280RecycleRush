@@ -448,7 +448,8 @@ void RecycleRushRobot::AutonomousInit()
 
 	GetAutoModeSwitches();
 	GetRobotSensorInput();
-		
+	ShowAMStatus();
+
 	return;
 }
 //------------------------------------------------------------------------------
@@ -500,10 +501,8 @@ void RecycleRushRobot::DisabledPeriodic()
 	elapsedSec = (int)GetClock() - startSec;
 	
 	GetAutoModeSwitches();
-
-#ifdef CONSOLE
-	ShowRobotValues();
-#endif
+	GetRobotSensorInput();
+	ShowAMStatus();
 
 	return;
 }
@@ -525,7 +524,6 @@ void RecycleRushRobot::AutonomousPeriodic()
 	elapsedSec = (int)GetClock() - startSec;
 
 	GetRobotSensorInput();
-	
 	ShowAMStatus();
 	
 	RunAutonomousMode();
@@ -770,7 +768,12 @@ void RecycleRushRobot::GetRobotSensorInput()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::ShowRobotValues()
 {
-    SmartDashboard::PutBoolean("IMU Calibrating",pIMU->IsCalibrating());
+	SmartDashboard::PutBoolean("AM Off Switch",pAutoModeOffSwitch->Get());
+	SmartDashboard::PutBoolean("AM Get Pieces Switch",pAutoModeGetPiecesSwitch->Get());
+	SmartDashboard::PutBoolean("AM Get Bin Switch",pAutoModeGetBinSwitch->Get());
+	SmartDashboard::PutBoolean("AM Stack Pieces Switch",pAutoModeStackBinsSwitch->Get());
+
+	SmartDashboard::PutBoolean("IMU Calibrating",pIMU->IsCalibrating());
     SmartDashboard::PutNumber("IMU Gyro Angle",pIMU->GetCompassHeading());
 	SmartDashboard::PutBoolean("Camera Lights",pCameraLights->GetCameraStatus());
     SmartDashboard::PutBoolean("Grabber Position",pGrabber->GetPosition());
@@ -797,6 +800,8 @@ void RecycleRushRobot::ShowRobotValues()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::GetAutoModeSwitches()
 {
+
+
 	return;
 }
 //------------------------------------------------------------------------------
@@ -832,10 +837,6 @@ void RecycleRushRobot::RunAutonomousMode()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::ShowAMStatus()
 {
-	SmartDashboard::PutBoolean("AutoMode Off Switch",pAutoModeOffSwitch->Get());
-	SmartDashboard::PutBoolean("AutoMode Get Pieces Switch",pAutoModeGetPiecesSwitch->Get());
-	SmartDashboard::PutBoolean("AutoMode Get Bin Switch",pAutoModeGetBinSwitch->Get());
-	SmartDashboard::PutBoolean("AutoMode Stack Pieces Switch",pAutoModeStackBinsSwitch->Get());
 
 	return;
 }
