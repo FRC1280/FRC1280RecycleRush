@@ -30,3 +30,5 @@ RecycleRushBot/.settings/language.settings.xml
 RecycleRushBot/Debug/FRCUserProgram
 RecycleRushBot/.settings/language.settings.xml
 RecycleRushBot/Debug/FRCUserProgram
+*.xml
+RecycleRushBot/Debug/FRCUserProgram

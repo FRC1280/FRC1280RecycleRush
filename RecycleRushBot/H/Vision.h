@@ -3,8 +3,8 @@
 
 #include "WPILib.h"
 
-//#define USE_USB_CAM
-#define USE_AXIS_CAM
+#define USE_USB_CAM
+//#define USE_AXIS_CAM
 
 #ifdef USE_USB_CAM
 
@@ -13,9 +13,11 @@ class Vision
 	public:
 		Vision(void);
 		void processImage(void);
+		void getImage(void);
 		bool getIsBright(void) { return isBright; }
 	private:
 		USBCamera *camera;
+		HSLImage *image;
 		bool isBright;
 };
 
@@ -31,9 +33,6 @@ class Vision
 		bool getIsBright() { return isBright; }
 	private:
 		void getImage();
-
-		bool checkPix(int x, int y);
-		HSLValue getPix(int x, int y);
 
 		AxisCamera *camera;
 		HSLImage *image;
