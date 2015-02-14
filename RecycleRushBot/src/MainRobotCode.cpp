@@ -114,8 +114,6 @@ class RecycleRushRobot : public IterativeRobot
 		// roboRio GPIO Channels
 		static const uint TOP_LIMIT_SW_CH		     =  0;
 		static const uint BOTTOM_LIMIT_SW_CH	     =  1;
-		static const uint TOP_LIMIT_SW_CH		     =  0;
-		static const uint BOTTOM_LIMIT_SW_CH	     =  1;
 		static const uint AUTO_MODE_OFF_SW_CH        =  2;
 		static const uint AUTO_MODE_GET_PIECES_SW_CH =  3;
 		static const uint AUTO_MODE_GET_BIN_SW_CH    =  4;
