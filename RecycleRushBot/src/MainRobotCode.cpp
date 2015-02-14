@@ -66,13 +66,15 @@ class RecycleRushRobot : public IterativeRobot
 		void   GetRobotSensorInput();
 		void   ShowRobotValues();
 
-		// Miscellaneous robot function methods
-		int  GetTime();
-
 		// Autonomous mode methods
 		void   GetAutoModeSwitches();
+		uint   DeterminePiecesToSet();
 		void   RunAutonomousMode();
-		void   AMDriveRobot();
+		void   RunSetRobot();
+		void   RunSetTote();
+		void   RunSetContainer();
+		void   RunStackTotes();
+		void   AMDriveRobot(float driveX, float driveY, float driveZ);
 		void   ShowAMStatus();
 
 	private:
@@ -93,16 +95,16 @@ class RecycleRushRobot : public IterativeRobot
 		static const uint RESET_COMPASS_2_BUTTON    = 11;
 
 		// Driver Station CCI Channels (Uses joystick button references)
-		static const uint OFFSET_DIVIDER_SW_CH      =  1;
+		static const uint OFFSET_STEP_SW_CH         =  1;
 	    static const uint OFFSET_GROUND_SW_CH       =  2;
 		static const uint ELEV_AUTO_MAN_SW_CH       =  3;
 		static const uint GRABBER_SW_CH			    =  4;
-		static const uint ELEVATOR_POSITION1_SW_CH  =  5;
-		static const uint ELEVATOR_POSITION2_SW_CH  =  6;
-		static const uint ELEVATOR_POSITION3_SW_CH  =  7;
-		static const uint ELEVATOR_POSITION4_SW_CH  =  8;
-		static const uint ELEVATOR_POSITION5_SW_CH  =  9;
-		static const uint ELEVATOR_POSITION6_SW_CH  = 10;
+		static const uint ELEVATOR_POSITION0_SW_CH  =  5;
+		static const uint ELEVATOR_POSITION1_SW_CH  =  6;
+		static const uint ELEVATOR_POSITION2_SW_CH  =  7;
+		static const uint ELEVATOR_POSITION3_SW_CH  =  8;
+		static const uint ELEVATOR_POSITION4_SW_CH  =  9;
+		static const uint ELEVATOR_POSITION5_SW_CH  = 10;
 		static const uint CAMERA_LIGHTS_SW_CH       = 11;
 
 		//----------------------------------------------------------------------
@@ -115,13 +117,12 @@ class RecycleRushRobot : public IterativeRobot
 		static const uint TOP_LIMIT_SW_CH		     =  0;
 		static const uint BOTTOM_LIMIT_SW_CH	     =  1;
 		static const uint AUTO_MODE_OFF_SW_CH        =  2;
-		static const uint AUTO_MODE_GET_PIECES_SW_CH =  3;
-		static const uint AUTO_MODE_GET_BIN_SW_CH    =  4;
-		static const uint AUTO_MODE_STACK_BINS_SW_CH =  5;
+		static const uint AUTO_MODE_SET_PIECES_SW_CH =  3;
+		static const uint AUTO_MODE_SET_TOTE_SW_CH   =  4;
+		static const uint AUTO_MODE_SET_STACK_SW_CH  =  5;
 
 		// roboRio Analog Channels
 		static const uint ELEVATOR_POT_CH		   =  0;
-		//static const uint DRIVE_GYRO_CH			   =  2;
 
 		// navX MXP Inertial Measurement Unit (IMU) Constants
 		static const uint8_t IMU_UPDATE_RATE       = 50;
@@ -152,16 +153,42 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		// CONSTANTS USED IN DECLARING OBJECTS
 		//----------------------------------------------------------------------
-        const double DS_POT_UPPER_LIMIT    		   =  1.0;
+        const double DS_POT_UPPER_LIMIT    	   =  1.0;
         const double DS_POT_LOWER_LIMIT     	   = -1.0;
 		//----------------------------------------------------------------------
 		// AUTONOMOUS MODE ROBOT CONTROL CONSTANTS (OUTPUTS)
 		//----------------------------------------------------------------------
+        // Robot drive variables
+        const float  AM_DRIVE_FWD_X    =  0.0;   // CONFIG
+        const float  AM_DRIVE_FWD_Y    =  0.5;   // CONFIG
+        const float  AM_DRIVE_FWD_Z    =  0.0;   // CONFIG
+        const float  AM_DRIVE_REV_X    =  0.0;   // CONFIG
+        const float  AM_DRIVE_REV_Y    = -0.5;   // CONFIG
+        const float  AM_DRIVE_REV_Z    =  0.0;   // CONFIG
+        const float  AM_DRIVE_LEFT_X   = -0.5;   // CONFIG
+        const float  AM_DRIVE_LEFT_Y   =  0.0;   // CONFIG
+        const float  AM_DRIVE_LEFT_Z   =  0.0;   // CONFIG
+        const float  AM_STOP_ROBOT_X   =  0.0;
+        const float  AM_STOP_ROBOT_Y   =  0.0;
+        const float  AM_STOP_ROBOT_Z   =  0.0;
+
+        // Robot timing variables - Robot Set
+        static const uint   AM_RS_DRIVE_FORWARD  = 500; // CONFIG
+
+        // Robot timing variables - Tote & Container Set
+        static const uint   AM_TC_CLOSE_GRABBER  =  50; // CONFIG
+        static const uint   AM_TC_RAISE_ELEVATOR = 100; // CONFIG
+        static const uint   AM_TC_DRIVE_FORWARD  = 500; // CONFIG
+        static const uint   AM_TC_LOWER_ELEVATOR = 550; // CONFIG
+        static const uint   AM_TC_OPEN_GRABBER   = 600; // CONFIG
+        static const uint   AM_TC_DRIVE_REVERSE  = 750; // CONFIG
 
 		//----------------------------------------------------------------------
 		// AUTONOMOUS MODE ROBOT STATE & TIMING TRACKING
 		// Used to determine what robot is or should be doing in autonomous mode
 		//----------------------------------------------------------------------
+        // Autonomous Mode States
+        enum autoModeStates {kAutoModeOff, kRobotSet, kToteSet, kContainerSet, kStackTotes };
 
 		//----------------------------------------------------------------------
 		// POINTERS FOR REQUIRED OBJECTS
@@ -183,15 +210,15 @@ class RecycleRushRobot : public IterativeRobot
 		// eStop Robotics Custom Control Interface (CCI)
 		Joystick         *pCCI;                 // CCI
 		JoystickButton   *pElevOffsetGroundSwitch;       // CCI Digital Inputs
-		JoystickButton   *pElevOffsetDividerSwitch;
+		JoystickButton   *pElevOffsetStepSwitch;
 		JoystickButton   *pElevManualSwitch;
 		JoystickButton	 *pGrabberSwitch;
+		JoystickButton   *pElevatorPosition0Switch;
 		JoystickButton   *pElevatorPosition1Switch;
 		JoystickButton   *pElevatorPosition2Switch;
 		JoystickButton   *pElevatorPosition3Switch;
 		JoystickButton   *pElevatorPosition4Switch;
 		JoystickButton   *pElevatorPosition5Switch;
-		JoystickButton   *pElevatorPosition6Switch;
 		JoystickButton 	 *pCameraLightSwitch;
 
 		//----------------------------------------------------------------------
@@ -207,9 +234,9 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		// Autonomous Mode Switches
 		DigitalInput    *pAutoModeOffSwitch;
-		DigitalInput    *pAutoModeGetPiecesSwitch;
-		DigitalInput    *pAutoModeGetBinSwitch;
-		DigitalInput    *pAutoModeStackBinsSwitch;
+		DigitalInput    *pAutoModeSetPiecesSwitch;
+		DigitalInput    *pAutoModeSetToteSwitch;
+		DigitalInput    *pAutoModeSetStackSwitch;
 	
 		//----------------------------------------------------------------------
 		// Robot Digital Outputs - Relays (Spikes)
@@ -248,6 +275,7 @@ class RecycleRushRobot : public IterativeRobot
 		bool   lightsOn;
 		// Robot Switches
 		bool   grabberOpen;
+		bool   elevatorManual;
 		double elevatorTarget;
 		uint   elevatorBase;
 		uint   elevatorOffset;
@@ -259,21 +287,15 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
 		// Class variables to track look (packet) counts
 		uint   loopCount;
-        float  loopsPerMinute;
-
-        // Class variables to track time
-		int  startSec;
-		int  elapsedSec;
-		int  oldSec;
 
 		//----------------------------------------------------------------------
 		// Camera Image Processing
 		//----------------------------------------------------------------------
-		
 
 		//----------------------------------------------------------------------
 		// Autonomous Mode Switches & variables
 		//----------------------------------------------------------------------
+		uint autoMode;
 
 };
 //------------------------------------------------------------------------------
@@ -289,8 +311,8 @@ START_ROBOT_CLASS(RecycleRushRobot);
 // METHOD:  RecycleRushRobot::RecycleRushRobot
 // Type:	Public default constructor for RecycleRushRobot class
 //------------------------------------------------------------------------------
-// Defines pointers to required robot objects and initializes packet count and
-// loop count variables.
+// Defines pointers to required robot objects and initializes packet count
+// variable.
 //------------------------------------------------------------------------------
 RecycleRushRobot::RecycleRushRobot()
 {
@@ -314,15 +336,15 @@ RecycleRushRobot::RecycleRushRobot()
 
 	// CCI Switches
     pElevOffsetGroundSwitch          = new JoystickButton(pCCI,OFFSET_GROUND_SW_CH);
-    pElevOffsetDividerSwitch         = new JoystickButton(pCCI,OFFSET_DIVIDER_SW_CH);
+    pElevOffsetStepSwitch            = new JoystickButton(pCCI,OFFSET_STEP_SW_CH);
 	pGrabberSwitch		 			 = new JoystickButton(pCCI,GRABBER_SW_CH);
 	pElevManualSwitch	        	 = new JoystickButton(pCCI,ELEV_AUTO_MAN_SW_CH);
+	pElevatorPosition0Switch		 = new JoystickButton(pCCI,ELEVATOR_POSITION0_SW_CH);
 	pElevatorPosition1Switch		 = new JoystickButton(pCCI,ELEVATOR_POSITION1_SW_CH);
 	pElevatorPosition2Switch		 = new JoystickButton(pCCI,ELEVATOR_POSITION2_SW_CH);
 	pElevatorPosition3Switch		 = new JoystickButton(pCCI,ELEVATOR_POSITION3_SW_CH);
 	pElevatorPosition4Switch		 = new JoystickButton(pCCI,ELEVATOR_POSITION4_SW_CH);
 	pElevatorPosition5Switch		 = new JoystickButton(pCCI,ELEVATOR_POSITION5_SW_CH);
-	pElevatorPosition6Switch		 = new JoystickButton(pCCI,ELEVATOR_POSITION6_SW_CH);
 	pCameraLightSwitch   			 = new JoystickButton(pCCI,CAMERA_LIGHTS_SW_CH);
 
 	//----------------------------------------------------------------------
@@ -331,9 +353,9 @@ RecycleRushRobot::RecycleRushRobot()
 	// GPIO & Spare Power Inputs
 	// - Autonomous Mode Switches
 	pAutoModeOffSwitch       = new DigitalInput(AUTO_MODE_OFF_SW_CH);
-	pAutoModeGetPiecesSwitch = new DigitalInput(AUTO_MODE_GET_PIECES_SW_CH);
-	pAutoModeGetBinSwitch    = new DigitalInput(AUTO_MODE_GET_BIN_SW_CH);
-	pAutoModeStackBinsSwitch = new DigitalInput(AUTO_MODE_STACK_BINS_SW_CH);
+	pAutoModeSetPiecesSwitch = new DigitalInput(AUTO_MODE_SET_PIECES_SW_CH);
+	pAutoModeSetToteSwitch   = new DigitalInput(AUTO_MODE_SET_TOTE_SW_CH);
+	pAutoModeSetStackSwitch  = new DigitalInput(AUTO_MODE_SET_STACK_SW_CH);
 	
 	// navX MXP Intertial Measurement Unit (IMU)
 	pIMUPort             = new SerialPort(57600,SerialPort::kMXP);
@@ -357,16 +379,15 @@ RecycleRushRobot::RecycleRushRobot()
 	//----------------------------------------------------------------------
 	// INITIALIZE VARIABLES
 	//----------------------------------------------------------------------
-	// Initialize loop and time counters
+	// Initialize loop counter
 	loopCount      = 0;
-	startSec       = 0;
-	elapsedSec     = 0;
-	loopsPerMinute = 0;
-	oldSec         = 0;
 
+	// Initialize robot control variables
+	autoMode           = kAutoModeOff;
 	fieldOrientationOn = false;  // CONFIGURE
 	lightsOn           = false;  // CONFIGURE
 	grabberOpen        = true;   // CONFIGURE
+	elevatorManual     = false;
 	elevatorTarget     = 0;
 	elevatorBase       = 0;
 	elevatorOffset     = 0;
@@ -411,16 +432,11 @@ void RecycleRushRobot::RobotInit()
 //------------------------------------------------------------------------------
 // Functions:
 // - Resets loop counter for disabled mode
-// - Starts the clock that counts how long robot has been in disabled mode
 //------------------------------------------------------------------------------
 void RecycleRushRobot::DisabledInit()
 {
 	// Reset loop counter
 	loopCount  = 0;
-
-	// Capture time disabled mode was entered
-	elapsedSec = 0;
-	startSec   = (int)GetClock();
 
 	return;
 }
@@ -441,18 +457,19 @@ void RecycleRushRobot::AutonomousInit()
 	// Reset loop counter
 	loopCount  = 0;
 
-	// Capture time autonomous mode was entered
-	elapsedSec = 0;
-	startSec   = (int)GetClock();
-	
 	// Set Robot Components to Default Starting Positions
-	pIMU->ZeroYaw();
-	pCameraLights->TurnOn();                   // Configure
+	pCameraLights->TurnOff();                  // Configure
+
+	pIMU->ZeroYaw();                           // Reset robot orientation
+
+	elevatorManual = false;                    // Configure
+	elevatorTarget = pElevator->GetCurrentPosition();
+	elevatorBase   = Elevator::kPosition0;     // Configure
+	elevatorOffset = Elevator::kGround;        // Configure
+
 	pGrabber->OpenGrabber();                   // Configure
 
-	elevatorTarget = pElevator->GetCurrentPosition();
-	elevatorBase   = Elevator::kPosition2;     // Configure
-	elevatorOffset = Elevator::kGround;        // Configure
+	fieldOrientationOn = false;                // Configure
 
 	GetAutoModeSwitches();
 	GetRobotSensorInput();
@@ -466,7 +483,7 @@ void RecycleRushRobot::AutonomousInit()
 //			TeleopInit() virtual method contained in WPILib.
 //------------------------------------------------------------------------------
 // Functions:
-// - Resets the loop and packet counters for teleoperated mode
+// - Resets the loop counters for teleoperated mode
 // - Resets the distance tracking variables
 // - Resets the wheel encoder counters
 // - Obtain the current position of the elevator from the robot
@@ -477,13 +494,8 @@ void RecycleRushRobot::TeleopInit()
 	pVision = new Vision;
 #endif
 
-	// General loop count & elapsed time initialization
+	// Loop count initialization
 	loopCount      = 0;
-	loopsPerMinute = 0;
-
-	elapsedSec = 0;
-	startSec   = (int)GetClock();
-	oldSec     = startSec;
 
 	return;
 }
@@ -493,21 +505,13 @@ void RecycleRushRobot::TeleopInit()
 //			DisabledPeriodic() virtual method contained in WPILib.
 //------------------------------------------------------------------------------
 // Functions:
-// - Define a variable that captures the time this method is invoked.
-// - Feed watchdog to prevent robot shut-down
 // - Increment the disabled loop counter
-// - Increments the time the robot is in disabled mode
-// - Optionally can print to the console the time robot is in disabled mode
 //------------------------------------------------------------------------------
 void RecycleRushRobot::DisabledPeriodic()
 {
-
-    // Increment & display loop counter
+    // Increment loop counter
 	loopCount++;
 
-	// Calculate & display elapsed seconds
-	elapsedSec = (int)GetClock() - startSec;
-	
 	GetAutoModeSwitches();
 	GetRobotSensorInput();
 	ShowAMStatus();
@@ -531,9 +535,6 @@ void RecycleRushRobot::AutonomousPeriodic()
 {
     // Increment & display loop counter
 	loopCount++;
-
-	// Calculate & display elapsed seconds
-	elapsedSec = (int)GetClock() - startSec;
 
 	GetRobotSensorInput();
 	
@@ -566,9 +567,6 @@ void RecycleRushRobot::TeleopPeriodic()
 	// Increment & display loop counter
 	loopCount++;
 
-	// Calculate & display elapsed seconds
-	elapsedSec = (int)GetClock() - startSec;
-
 #ifdef VISION
 	pVision->processImage();
 #endif
@@ -581,7 +579,7 @@ void RecycleRushRobot::TeleopPeriodic()
 
 	//Set Drive Speed and drive mode with or without field orientation
 	if ( fieldOrientationOn )
-		pDriveTrain->MecanumDrive_Cartesian (pDriveStick->GetX(), pDriveStick->GetY(), pDriveStick->GetTwist(),pIMU->GetYaw());
+		pDriveTrain->MecanumDrive_Cartesian (pDriveStick->GetX(), pDriveStick->GetY(), pDriveStick->GetTwist(), pIMU->GetYaw());
 	else
 		pDriveTrain->MecanumDrive_Cartesian (pDriveStick->GetX(), pDriveStick->GetY(), pDriveStick->GetTwist());
 
@@ -653,10 +651,15 @@ void RecycleRushRobot::GetDriverStationInput()
 // METHOD:  RecycleRushRobot::GetElevatorTarget()
 // Type:	Public accessor for RecycleRushRobot class
 //------------------------------------------------------------------------------
-//
+// Obtains elevator target settings from the driver station.  Includes:
+// - Manual versus pre-set elevator target switch value
+// - Driver station elevator potentiometer input for manual mode
+// - Driver station switch positions for pre-set target mode
 //------------------------------------------------------------------------------
 void  RecycleRushRobot::GetElevatorTarget()
 {
+	elevatorManual = pElevManualSwitch->Get();
+
 	elevatorTarget = pCCI->GetX();
 
 	GetElevatorBase();
@@ -672,28 +675,28 @@ void  RecycleRushRobot::GetElevatorTarget()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::GetElevatorBase()
 {
-    if ( !pElevatorPosition1Switch->Get() )
-       	elevatorBase = Elevator::kPosition1;
+    if ( !pElevatorPosition0Switch->Get() )
+       	elevatorBase = Elevator::kPosition0;
     else
     {
-    	if ( !pElevatorPosition2Switch->Get() )
-    		elevatorBase = Elevator::kPosition2;
+    	if ( !pElevatorPosition1Switch->Get() )
+    		elevatorBase = Elevator::kPosition1;
     	else
     	{
-    		if ( !pElevatorPosition3Switch->Get() )
-    			elevatorBase = Elevator::kPosition3;
+    		if ( !pElevatorPosition2Switch->Get() )
+    			elevatorBase = Elevator::kPosition2;
     		else
     		{
-    			if ( !pElevatorPosition4Switch->Get() )
-    				elevatorBase = Elevator::kPosition4;
+    			if ( !pElevatorPosition3Switch->Get() )
+    				elevatorBase = Elevator::kPosition3;
     			else
     			{
-    				if ( !pElevatorPosition5Switch->Get() )
-    					elevatorBase = Elevator::kPosition5;
+    				if ( !pElevatorPosition4Switch->Get() )
+    					elevatorBase = Elevator::kPosition4;
     				else
     				{
-    					if ( !pElevatorPosition6Switch->Get() )
-    						elevatorBase = Elevator::kPosition6;
+    					if ( !pElevatorPosition5Switch->Get() )
+    						elevatorBase = Elevator::kPosition5;
     				}
     			}
     		}
@@ -714,11 +717,11 @@ void RecycleRushRobot::GetElevatorOffset()
        	elevatorOffset = Elevator::kGround;
     else
     {
-    	if ( pElevOffsetDividerSwitch->Get() )
-    		elevatorOffset = Elevator::kDivider;
+    	if ( pElevOffsetStepSwitch->Get() )
+    		elevatorOffset = Elevator::kStep;
     	else
     	{
-    		elevatorOffset = Elevator::kBurm;
+    		elevatorOffset = Elevator::kPlatform;
     	}
     }
 
@@ -742,15 +745,15 @@ void RecycleRushRobot::ShowDSValues()
 	SmartDashboard::PutBoolean("Use Field Orientation",fieldOrientationOn);
 	SmartDashboard::PutBoolean("Camera Lights Switch",lightsOn);
 	SmartDashboard::PutBoolean("Offset Ground Switch",pElevOffsetGroundSwitch->Get());
-	SmartDashboard::PutBoolean("Offset Divider Switch",pElevOffsetDividerSwitch->Get());
+	SmartDashboard::PutBoolean("Offset Step Switch",pElevOffsetStepSwitch->Get());
 	SmartDashboard::PutBoolean("Elevator Manual Switch",pElevManualSwitch->Get());
 	SmartDashboard::PutBoolean("Grabber Switch",pGrabberSwitch->Get());
+	SmartDashboard::PutBoolean("Elevator Position 0",pElevatorPosition0Switch->Get());
 	SmartDashboard::PutBoolean("Elevator Position 1",pElevatorPosition1Switch->Get());
 	SmartDashboard::PutBoolean("Elevator Position 2",pElevatorPosition2Switch->Get());
 	SmartDashboard::PutBoolean("Elevator Position 3",pElevatorPosition3Switch->Get());
 	SmartDashboard::PutBoolean("Elevator Position 4",pElevatorPosition4Switch->Get());
 	SmartDashboard::PutBoolean("Elevator Position 5",pElevatorPosition5Switch->Get());
-	SmartDashboard::PutBoolean("Elevator Position 6",pElevatorPosition6Switch->Get());
 	SmartDashboard::PutNumber("Elev Input POT",pCCI->GetX());
 
 	SmartDashboard::PutNumber("Joystick X",pDriveStick->GetX());
@@ -786,10 +789,12 @@ void RecycleRushRobot::GetRobotSensorInput()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::ShowRobotValues()
 {
+	SmartDashboard::PutNumber("Packet count",loopCount);
 	SmartDashboard::PutBoolean("AM Off Switch",pAutoModeOffSwitch->Get());
-	SmartDashboard::PutBoolean("AM Get Pieces Switch",pAutoModeGetPiecesSwitch->Get());
-	SmartDashboard::PutBoolean("AM Get Bin Switch",pAutoModeGetBinSwitch->Get());
-	SmartDashboard::PutBoolean("AM Stack Pieces Switch",pAutoModeStackBinsSwitch->Get());
+	SmartDashboard::PutBoolean("AM Set Pieces Switch",pAutoModeSetPiecesSwitch->Get());
+	SmartDashboard::PutBoolean("AM Set Tote Switch",pAutoModeSetToteSwitch->Get());
+	SmartDashboard::PutBoolean("AM Set Stack Switch",pAutoModeSetStackSwitch->Get());
+	SmartDashboard::PutNumber("AM Mode",autoMode);
 	SmartDashboard::PutBoolean("IMU Connected",pIMU->IsConnected());
 	SmartDashboard::PutBoolean("IMU Calibrating",pIMU->IsCalibrating());
 	SmartDashboard::PutNumber("IMU Gyro Angle",pIMU->GetCompassHeading());
@@ -821,20 +826,51 @@ void RecycleRushRobot::ShowRobotValues()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::GetAutoModeSwitches()
 {
+	if ( pAutoModeOffSwitch->Get() )
+	{
+		autoMode = kAutoModeOff;
+	}
+	else
+	{
+		if ( pAutoModeSetPiecesSwitch->Get() )
+		{
+			autoMode = DeterminePiecesToSet();
+		}
+		else
+		{
+			autoMode = kRobotSet;
+		}
+	}
+
 	return;
 }
 //------------------------------------------------------------------------------
-// METHOD:  RecycleRushRobot::GetTime()
+// METHOD:  RecycleRushRobot::DeterminePiecesToSet()
 // Type:	Public accessor for RecycleRushRobot class
 //------------------------------------------------------------------------------
-// Shifts gear on Grabber to match input from driver station.  Gear shifts
-// are via a pneumatic cylinder controlled by a solenoid.
+// Determines which pieces robot will attempt to move in autonomous mode
 //------------------------------------------------------------------------------
-int RecycleRushRobot::GetTime()
+uint RecycleRushRobot::DeterminePiecesToSet()
 {
-	int currentTime = (int)GetClock();
+	uint pieceMode = 0;
 
-	return currentTime;
+	if ( pAutoModeSetToteSwitch->Get() )
+	{
+		pieceMode = kToteSet;
+	}
+	else
+	{
+		if ( pAutoModeSetStackSwitch->Get() )
+		{
+			pieceMode = kStackTotes;
+		}
+		else
+		{
+			pieceMode = kContainerSet;
+		}
+	}
+
+	return pieceMode;
 }
 //------------------------------------------------------------------------------
 // METHOD:  RecycleRushRobot::RunAutonomousMode()
@@ -844,9 +880,117 @@ int RecycleRushRobot::GetTime()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::RunAutonomousMode()
 {
+	switch ( autoMode )
+	{
+		case kAutoModeOff:
+			AMDriveRobot(AM_STOP_ROBOT_X,AM_STOP_ROBOT_Y,AM_STOP_ROBOT_Z);
+			break;
+
+		case kRobotSet:
+			RunSetRobot();
+			break;
+
+		case kToteSet:
+			RunSetTote();
+			break;
+
+		case kContainerSet:
+			RunSetContainer();
+			break;
+
+		case kStackTotes:
+			RunStackTotes();
+			break;
+
+		default:
+			break;
+	}
+
 	return;
 }
+//------------------------------------------------------------------------------
+// METHOD:  RecycleRushRobot::RunSetRobot()
+// Type:	Public accessor for RecycleRushRobot class
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void RecycleRushRobot::RunSetRobot()
+{
+	if ( loopCount <= AM_RS_DRIVE_FORWARD )
+		AMDriveRobot(AM_DRIVE_FWD_X,AM_DRIVE_FWD_Y,AM_DRIVE_FWD_Z);
+	else
+		autoMode = kAutoModeOff;
 
+	return;
+}
+//------------------------------------------------------------------------------
+// METHOD:  RecycleRushRobot::RunSetTote()
+// Type:	Public accessor for RecycleRushRobot class
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void RecycleRushRobot::RunSetTote()
+{
+	if ( loopCount <= AM_TC_CLOSE_GRABBER )
+		pGrabber->CloseGrabber();
+	else
+		if ( loopCount <= AM_TC_RAISE_ELEVATOR )
+			pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
+		else
+			if ( loopCount <= AM_TC_DRIVE_FORWARD)
+				AMDriveRobot(AM_DRIVE_FWD_X,AM_DRIVE_FWD_Y,AM_DRIVE_FWD_Z);
+			else
+				if ( loopCount <= AM_TC_LOWER_ELEVATOR )
+					pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
+				else
+					if ( loopCount <= AM_TC_OPEN_GRABBER )
+						pGrabber->OpenGrabber();
+					else
+						if ( loopCount <= AM_TC_DRIVE_REVERSE )
+							AMDriveRobot(AM_DRIVE_REV_X,AM_DRIVE_REV_Y,AM_DRIVE_REV_Z);
+						else
+							autoMode = kAutoModeOff;
+
+	return;
+}
+//------------------------------------------------------------------------------
+// METHOD:  RecycleRushRobot::RunSetContainer()
+// Type:	Public accessor for RecycleRushRobot class
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void RecycleRushRobot::RunSetContainer()
+{
+	RunSetTote();
+
+	return;
+}
+//------------------------------------------------------------------------------
+// METHOD:  RecycleRushRobot::RunStackTotes()
+// Type:	Public accessor for RecycleRushRobot class
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void RecycleRushRobot::RunStackTotes()
+{
+	return;
+}
+//------------------------------------------------------------------------------
+// METHOD:  RecycleRushRobot::AMDriveRobot()
+// Type:	Public accessor for RecycleRushRobot class
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void RecycleRushRobot::AMDriveRobot(float driveX, float driveY, float driveZ)
+{
+	//Set Drive Speed and drive mode with or without field orientation
+	if ( fieldOrientationOn )
+		pDriveTrain->MecanumDrive_Cartesian (driveX, driveY, driveZ, pIMU->GetYaw());
+	else
+		pDriveTrain->MecanumDrive_Cartesian (driveX, driveY, driveZ);
+
+	return;
+}
 //------------------------------------------------------------------------------
 // METHOD:  RecycleRushRobot::ShowAMStatus()
 // Type:	Public accessor for RecycleRushRobot class

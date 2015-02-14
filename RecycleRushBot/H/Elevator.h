@@ -15,9 +15,8 @@ class Elevator
 {
 	public:
 
-//		enum elevatorMode {kManual, kAutomatic};  // Probably don't need these
-		enum  offset {kGround, kBurm, kDivider};
-		enum  target {kPosition1, kPosition2, kPosition3, kPosition4, kPosition5, kPosition6};
+		enum  offset {kGround, kPlatform, kStep};
+		enum  target {kPosition0, kPosition1, kPosition2, kPosition3, kPosition4, kPosition5};
 
 		Elevator(uint elevMotorCh, uint elevPotCh, uint upperLimitSwCh, uint lowerLimitSwCh);
 		~Elevator();
@@ -52,8 +51,8 @@ class Elevator
 		const double  POSITION4_INCREMENT       = 48.00;   // CONFIGURE
 		const double  POSITION5_INCREMENT       = 52.00;   // CONFIGURE
 		const double  OFFSET_GROUND             =  0.00;
-		const double  OFFSET_BURM               =  2.00;   // CONFIGURE
-		const double  OFFSET_DIVIDER            =  6.00;   // CONFIGURE
+		const double  OFFSET_PLATFORM           =  2.00;   // CONFIGURE
+		const double  OFFSET_STEP               =  6.25;   // CONFIGURE
 
 		const bool    PID_CONTROLLER_ON         =  true;
 		const bool    PID_CONTROLLER_OFF        =  false;

@@ -233,27 +233,27 @@ double Elevator::CalcBaseTarget(uint basePosition)
 
     switch ( basePosition )
     {
-    	case kPosition1:
+    	case kPosition0:
 			targetPot = ELEV_POS_LOWER_LIMIT + POSITION0_INCREMENT;
     		break;
 
-    	case kPosition2:
+    	case kPosition1:
 			targetPot = ELEV_POS_LOWER_LIMIT + POSITION1_INCREMENT;
 			break;
 
-    	case kPosition3:
+    	case kPosition2:
 			targetPot = ELEV_POS_LOWER_LIMIT + POSITION2_INCREMENT;
 			break;
 
-    	case kPosition4:
+    	case kPosition3:
 			targetPot = ELEV_POS_LOWER_LIMIT + POSITION3_INCREMENT;
 			break;
 
-    	case kPosition5:
+    	case kPosition4:
 			targetPot = ELEV_POS_LOWER_LIMIT + POSITION4_INCREMENT;
 			break;
 
-    	case kPosition6:
+    	case kPosition5:
 			targetPot = ELEV_POS_LOWER_LIMIT + POSITION5_INCREMENT;
 			break;
 
@@ -281,12 +281,12 @@ double Elevator::CalcOffsetTarget(uint offsetPosition)
 			offsetPot = OFFSET_GROUND;
     		break;
 
-    	case kBurm:
-			offsetPot = OFFSET_BURM;
+    	case kPlatform:
+			offsetPot = OFFSET_PLATFORM;
 			break;
 
-    	case kDivider:
-			offsetPot = OFFSET_DIVIDER;
+    	case kStep:
+			offsetPot = OFFSET_STEP;
 			break;
 
     	default:
