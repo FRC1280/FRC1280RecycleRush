@@ -71,8 +71,8 @@ class RecycleRushRobot : public IterativeRobot
 		uint   DeterminePiecesToSet();
 		void   RunAutonomousMode();
 		void   RunSetRobot();
-		void   RunSetTote();
-		void   RunSetContainer();
+		void   RunSetToteLeft();
+		void   RunSetToteRight();
 		void   RunStackTotes();
 		void   AMDriveRobot(float driveX, float driveY, float driveZ);
 		void   ShowAMStatus();
@@ -160,35 +160,52 @@ class RecycleRushRobot : public IterativeRobot
 		//----------------------------------------------------------------------
         // Robot drive variables
         const float  AM_DRIVE_FWD_X    =  0.0;   // CONFIG
-        const float  AM_DRIVE_FWD_Y    =  0.5;   // CONFIG
+        const float  AM_DRIVE_FWD_Y    =  0.50;   // CONFIG
         const float  AM_DRIVE_FWD_Z    =  0.0;   // CONFIG
-        const float  AM_DRIVE_REV_X    =  0.0;   // CONFIG
-        const float  AM_DRIVE_REV_Y    = -0.5;   // CONFIG
-        const float  AM_DRIVE_REV_Z    =  0.0;   // CONFIG
-        const float  AM_DRIVE_LEFT_X   = -0.5;   // CONFIG
+        const float  AM_TURN_LEFT_X    =  0.0;   // CONFIG
+        const float  AM_TURN_LEFT_Y    =  0.0;   // CONFIG
+        const float  AM_TURN_LEFT_Z    =  0.45;   // CONFIG
+        const float  AM_TURN_RIGHT_X   =  0.0;   // CONFIG
+        const float  AM_TURN_RIGHT_Y   =  0.0;   // CONFIG
+        const float  AM_TURN_RIGHT_Z   = -0.45;   // CONFIG
+        const float  AM_DRIVE_LEFT_X   =  0.45;   // CONFIG
         const float  AM_DRIVE_LEFT_Y   =  0.0;   // CONFIG
         const float  AM_DRIVE_LEFT_Z   =  0.0;   // CONFIG
+        const float  AM_DRIVE_RIGHT_X  = -0.45;   // CONFIG
+        const float  AM_DRIVE_RIGHT_Y  =  0.0;   // CONFIG
+        const float  AM_DRIVE_RIGHT_Z  =  0.0;   // CONFIG
         const float  AM_STOP_ROBOT_X   =  0.0;
         const float  AM_STOP_ROBOT_Y   =  0.0;
         const float  AM_STOP_ROBOT_Z   =  0.0;
 
         // Robot timing variables - Robot Set
-        static const uint   AM_RS_DRIVE_FORWARD  = 500; // CONFIG
+        static const uint   AM_RS_DRIVE_FORWARD  = 100; // CONFIG
+        static const uint   AM_RS_TURN           = 145; // CONFIG
 
         // Robot timing variables - Tote & Container Set
         static const uint   AM_TC_CLOSE_GRABBER  =  50; // CONFIG
         static const uint   AM_TC_RAISE_ELEVATOR = 100; // CONFIG
-        static const uint   AM_TC_DRIVE_FORWARD  = 500; // CONFIG
-        static const uint   AM_TC_LOWER_ELEVATOR = 550; // CONFIG
-        static const uint   AM_TC_OPEN_GRABBER   = 600; // CONFIG
-        static const uint   AM_TC_DRIVE_REVERSE  = 750; // CONFIG
+        static const uint   AM_TC_DRIVE_FORWARD  = 200; // CONFIG
+        static const uint   AM_TC_DRIVE_TURN     = 245; // CONFIG
+        static const uint   AM_TC_LOWER_ELEVATOR = 345; // CONFIG
+        static const uint   AM_TC_OPEN_GRABBER   = 395; // CONFIG
+        static const uint   AM_TC_DRIVE_REVERSE  = 420; // CONFIG
+
+        // Robot timing variables - Stack Tote Set
+        static const uint   AM_ST_CLOSE_GRABBER  =  25; // CONFIG
+        static const uint   AM_ST_RAISE_ELEVATOR =  50; // CONFIG
+        static const uint   AM_ST_TURN_RIGHT     = 100; // CONFIG
+        static const uint   AM_ST_DRIVE_LEFT     = 188; // CONFIG
+        static const uint   AM_ST_TURN_LEFT      = 233; // CONFIG
+        static const uint   AM_ST_OPEN_GRABBER   = 258; // CONFIG
+        static const uint   AM_ST_LOWER_ELEVATOR = 283; // CONFIG
 
 		//----------------------------------------------------------------------
 		// AUTONOMOUS MODE ROBOT STATE & TIMING TRACKING
 		// Used to determine what robot is or should be doing in autonomous mode
 		//----------------------------------------------------------------------
         // Autonomous Mode States
-        enum autoModeStates {kAutoModeOff, kRobotSet, kToteSet, kContainerSet, kStackTotes };
+        enum autoModeStates {kAutoModeOff, kRobotSet, kToteSetLeft, kToteSetRight, kStackTotes };
 
 		//----------------------------------------------------------------------
 		// POINTERS FOR REQUIRED OBJECTS
@@ -463,13 +480,13 @@ void RecycleRushRobot::AutonomousInit()
 	pIMU->ZeroYaw();                           // Reset robot orientation
 
 	elevatorManual = false;                    // Configure
-	elevatorTarget = pElevator->GetCurrentPosition();
+	//elevatorTarget = pElevator->GetCurrentPosition();
 	elevatorBase   = Elevator::kPosition0;     // Configure
 	elevatorOffset = Elevator::kGround;        // Configure
 
 	pGrabber->OpenGrabber();                   // Configure
 
-	fieldOrientationOn = false;                // Configure
+	fieldOrientationOn = true;                // Configure
 
 	GetAutoModeSwitches();
 	GetRobotSensorInput();
@@ -790,10 +807,10 @@ void RecycleRushRobot::GetRobotSensorInput()
 void RecycleRushRobot::ShowRobotValues()
 {
 	SmartDashboard::PutNumber("Packet count",loopCount);
-	SmartDashboard::PutBoolean("AM Off Switch",pAutoModeOffSwitch->Get());
-	SmartDashboard::PutBoolean("AM Set Pieces Switch",pAutoModeSetPiecesSwitch->Get());
-	SmartDashboard::PutBoolean("AM Set Tote Switch",pAutoModeSetToteSwitch->Get());
-	SmartDashboard::PutBoolean("AM Set Stack Switch",pAutoModeSetStackSwitch->Get());
+//	SmartDashboard::PutBoolean("AM Off Switch",pAutoModeOffSwitch->Get());
+//	SmartDashboard::PutBoolean("AM Set Pieces Switch",pAutoModeSetPiecesSwitch->Get());
+//	SmartDashboard::PutBoolean("AM Set Tote Right",pAutoModeSetToteSwitch->Get());
+//	SmartDashboard::PutBoolean("AM Set Stack Switch",pAutoModeSetStackSwitch->Get());
 	SmartDashboard::PutNumber("AM Mode",autoMode);
 	SmartDashboard::PutBoolean("IMU Connected",pIMU->IsConnected());
 	SmartDashboard::PutBoolean("IMU Calibrating",pIMU->IsCalibrating());
@@ -826,19 +843,19 @@ void RecycleRushRobot::ShowRobotValues()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::GetAutoModeSwitches()
 {
-	if ( pAutoModeOffSwitch->Get() )
+	if ( pAutoModeOffSwitch->Get() && pAutoModeSetPiecesSwitch->Get() )
 	{
-		autoMode = kAutoModeOff;
+		autoMode = kRobotSet;
 	}
 	else
 	{
-		if ( pAutoModeSetPiecesSwitch->Get() )
+		if ( !pAutoModeSetPiecesSwitch->Get() )
 		{
 			autoMode = DeterminePiecesToSet();
 		}
 		else
 		{
-			autoMode = kRobotSet;
+			autoMode = kAutoModeOff;
 		}
 	}
 
@@ -854,19 +871,19 @@ uint RecycleRushRobot::DeterminePiecesToSet()
 {
 	uint pieceMode = 0;
 
-	if ( pAutoModeSetToteSwitch->Get() )
+	if ( pAutoModeSetToteSwitch->Get() && pAutoModeSetStackSwitch->Get() )
 	{
-		pieceMode = kToteSet;
+		pieceMode = kToteSetRight;
 	}
 	else
 	{
-		if ( pAutoModeSetStackSwitch->Get() )
+		if ( !pAutoModeSetStackSwitch->Get() )
 		{
 			pieceMode = kStackTotes;
 		}
 		else
 		{
-			pieceMode = kContainerSet;
+			pieceMode = kToteSetLeft;
 		}
 	}
 
@@ -890,12 +907,12 @@ void RecycleRushRobot::RunAutonomousMode()
 			RunSetRobot();
 			break;
 
-		case kToteSet:
-			RunSetTote();
+		case kToteSetLeft:
+			RunSetToteLeft();
 			break;
 
-		case kContainerSet:
-			RunSetContainer();
+		case kToteSetRight:
+			RunSetToteRight();
 			break;
 
 		case kStackTotes:
@@ -919,7 +936,10 @@ void RecycleRushRobot::RunSetRobot()
 	if ( loopCount <= AM_RS_DRIVE_FORWARD )
 		AMDriveRobot(AM_DRIVE_FWD_X,AM_DRIVE_FWD_Y,AM_DRIVE_FWD_Z);
 	else
-		autoMode = kAutoModeOff;
+		if ( loopCount <= AM_RS_TURN )
+			AMDriveRobot(AM_TURN_LEFT_X, AM_TURN_LEFT_Y, AM_TURN_LEFT_Z);
+		else
+			autoMode = kAutoModeOff;
 
 	return;
 }
@@ -929,7 +949,7 @@ void RecycleRushRobot::RunSetRobot()
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void RecycleRushRobot::RunSetTote()
+void RecycleRushRobot::RunSetToteLeft()
 {
 	if ( loopCount <= AM_TC_CLOSE_GRABBER )
 		pGrabber->CloseGrabber();
@@ -940,30 +960,57 @@ void RecycleRushRobot::RunSetTote()
 			if ( loopCount <= AM_TC_DRIVE_FORWARD)
 				AMDriveRobot(AM_DRIVE_FWD_X,AM_DRIVE_FWD_Y,AM_DRIVE_FWD_Z);
 			else
-				if ( loopCount <= AM_TC_LOWER_ELEVATOR )
-					pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
+				if (loopCount <= AM_TC_DRIVE_TURN)
+					AMDriveRobot(AM_TURN_LEFT_X,AM_TURN_LEFT_Y,AM_TURN_LEFT_Z);
 				else
-					if ( loopCount <= AM_TC_OPEN_GRABBER )
-						pGrabber->OpenGrabber();
+					if ( loopCount <= AM_TC_LOWER_ELEVATOR )
+						pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 					else
-						if ( loopCount <= AM_TC_DRIVE_REVERSE )
-							AMDriveRobot(AM_DRIVE_REV_X,AM_DRIVE_REV_Y,AM_DRIVE_REV_Z);
+						if ( loopCount <= AM_TC_OPEN_GRABBER )
+							pGrabber->OpenGrabber();
 						else
-							autoMode = kAutoModeOff;
+							if ( loopCount <= AM_TC_DRIVE_REVERSE )
+								AMDriveRobot(AM_DRIVE_RIGHT_X,AM_DRIVE_RIGHT_Y,AM_DRIVE_RIGHT_Z);
+							else
+								autoMode = kAutoModeOff;
 
 	return;
 }
+
 //------------------------------------------------------------------------------
 // METHOD:  RecycleRushRobot::RunSetContainer()
 // Type:	Public accessor for RecycleRushRobot class
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void RecycleRushRobot::RunSetContainer()
+void RecycleRushRobot::RunSetToteRight()
 {
-	RunSetTote();
+	{
+		if ( loopCount <= AM_TC_CLOSE_GRABBER )
+			pGrabber->CloseGrabber();
+		else
+			if ( loopCount <= AM_TC_RAISE_ELEVATOR )
+				pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
+			else
+				if ( loopCount <= AM_TC_DRIVE_FORWARD)
+					AMDriveRobot(AM_DRIVE_FWD_X,AM_DRIVE_FWD_Y,AM_DRIVE_FWD_Z);
+				else
+					if (loopCount <= AM_TC_DRIVE_TURN)
+						AMDriveRobot(AM_TURN_RIGHT_X,AM_TURN_RIGHT_Y,AM_TURN_RIGHT_Z);
+					else
+						if ( loopCount <= AM_TC_LOWER_ELEVATOR )
+							pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
+						else
+							if ( loopCount <= AM_TC_OPEN_GRABBER )
+								pGrabber->OpenGrabber();
+							else
+								if ( loopCount <= AM_TC_DRIVE_REVERSE )
+									AMDriveRobot(AM_DRIVE_LEFT_X,AM_DRIVE_LEFT_Y,AM_DRIVE_LEFT_Z);
+								else
+									autoMode = kAutoModeOff;
 
-	return;
+		return;
+	}
 }
 //------------------------------------------------------------------------------
 // METHOD:  RecycleRushRobot::RunStackTotes()
@@ -973,9 +1020,41 @@ void RecycleRushRobot::RunSetContainer()
 //------------------------------------------------------------------------------
 void RecycleRushRobot::RunStackTotes()
 {
+	if ( loopCount <= AM_ST_CLOSE_GRABBER )
+		pGrabber->CloseGrabber();
+	else
+		if ( loopCount <= AM_ST_RAISE_ELEVATOR )
+			pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
+		else
+			if ( loopCount <= AM_ST_TURN_RIGHT )
+			{
+				pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
+				AMDriveRobot(AM_TURN_RIGHT_X,AM_TURN_RIGHT_Y,AM_TURN_RIGHT_Z);
+			}
+			else
+				if ( loopCount <= AM_ST_DRIVE_LEFT )
+				{
+					pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
+					AMDriveRobot(AM_DRIVE_LEFT_X,AM_DRIVE_LEFT_Y,AM_DRIVE_LEFT_Z);
+				}
+				else
+					if ( loopCount<= AM_ST_TURN_LEFT )
+					{
+						pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
+						AMDriveRobot(AM_TURN_LEFT_X,AM_TURN_LEFT_Y,AM_TURN_LEFT_Z);
+					}
+					else
+						if ( loopCount <= AM_ST_OPEN_GRABBER )
+							pGrabber->OpenGrabber();
+						else
+							if ( loopCount <= AM_ST_LOWER_ELEVATOR )
+								pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
+							else
+								autoMode = kAutoModeOff;
+
 	return;
 }
-//------------------------------------------------------------------------------
+//------------------------------------------------------------	------------------
 // METHOD:  RecycleRushRobot::AMDriveRobot()
 // Type:	Public accessor for RecycleRushRobot class
 //------------------------------------------------------------------------------
