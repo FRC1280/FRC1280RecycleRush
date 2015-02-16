@@ -35,14 +35,14 @@ class Elevator
 
 	private:
 		const float   MOTOR_SPEED_UP            =  1.0;    // CONFIGURE
-		const float   MOTOR_SPEED_DOWN          = -0.75;   // CONFIGURE
+		const float   MOTOR_SPEED_DOWN          = -1.0;   // CONFIGURE
 		const float   ALL_STOP                  =  0.0;
 
 		const double  DEFAULT_INPUT_UPPER_LIMIT =  5.0;    // CONFIGURE
 		const double  DEFAULT_INPUT_LOWER_LIMIT =  0.0;    // CONFIGURE
 		const double  ELEV_POS_UPPER_LIMIT      = 57.75;   // CONFIGURE
 		const double  ELEV_POS_LOWER_LIMIT      =  4.80;   // CONFIGURE
-		const double  TARGET_TOLERANCE          =  0.25;   // CONFIGURE
+		const double  TARGET_TOLERANCE          =  0.5;    // CONFIGURE
 
 		const double  POSITION0_INCREMENT       =  0.50;   // CONFIGURE
 		const double  POSITION1_INCREMENT       = 13.25;   // CONFIGURE
