@@ -181,29 +181,29 @@ class RecycleRushRobot : public IterativeRobot
 
         // Tote & Container Set Drive Speeds
         const float  AM_TC_DRIVE_FWD_X    =  0.0;   // CONFIG
-        const float  AM_TC_DRIVE_FWD_Y    =  0.5;   // CONFIG
+        const float  AM_TC_DRIVE_FWD_Y    =  0.4;   // CONFIG
         const float  AM_TC_DRIVE_FWD_Z    =  0.0;   // CONFIG
-        const float  AM_TC_DRIVE_LEFT_X   =  0.45;  // CONFIG
+        const float  AM_TC_DRIVE_LEFT_X   =  0.4;  // CONFIG
         const float  AM_TC_DRIVE_LEFT_Y   =  0.0;   // CONFIG
         const float  AM_TC_DRIVE_LEFT_Z   =  0.0;   // CONFIG
-        const float  AM_TC_DRIVE_RIGHT_X  = -0.45;  // CONFIG
+        const float  AM_TC_DRIVE_RIGHT_X  = -0.4;  // CONFIG
         const float  AM_TC_DRIVE_RIGHT_Y  =  0.0;   // CONFIG
         const float  AM_TC_DRIVE_RIGHT_Z  =  0.0;   // CONFIG
         const float  AM_TC_TURN_LEFT_X    =  0.0;   // CONFIG
         const float  AM_TC_TURN_LEFT_Y    =  0.0;   // CONFIG
-        const float  AM_TC_TURN_LEFT_Z    =  0.45;  // CONFIG
+        const float  AM_TC_TURN_LEFT_Z    =  0.25;  // CONFIG
         const float  AM_TC_TURN_RIGHT_X   =  0.0;   // CONFIG
         const float  AM_TC_TURN_RIGHT_Y   =  0.0;   // CONFIG
-        const float  AM_TC_TURN_RIGHT_Z   = -0.45;  // CONFIG
+        const float  AM_TC_TURN_RIGHT_Z   = -0.25;  // CONFIG
         // Tote & Container Set Timing Constants & Variables
         // Incremental timings
         static const uint   AM_TC_CLOSE_GRABBER_TIME  =  50; // CONFIG
         static const uint   AM_TC_RAISE_ELEV_TIME     =  50; // CONFIG
-        static const uint   AM_TC_DRIVE_FWD_TIME      = 100; // CONFIG
-        static const uint   AM_TC_TURN_TIME           =  45; // CONFIG
-        static const uint   AM_TC_LOWER_ELEV_TIME     = 100; // CONFIG
-        static const uint   AM_TC_OPEN_GRABBER_TIME   =  50; // CONFIG
-        static const uint   AM_TC_DRIVE_REV_TIME      =  25; // CONFIG
+        static const uint   AM_TC_DRIVE_FWD_TIME      = 120; // CONFIG
+        static const uint   AM_TC_TURN_TIME           = 105; // CONFIG
+        static const uint   AM_TC_LOWER_ELEV_TIME     = 105; // CONFIG
+        static const uint   AM_TC_OPEN_GRABBER_TIME   =  30; // CONFIG
+        static const uint   AM_TC_DRIVE_REV_TIME      =  30; // CONFIG
         // Cumulative Timings - Calculated at run time to make configuration easier
         uint amTCCloseGrabberSum   =   0;  // INITIALIZING TO ZERO HERE
         uint amTCRaiseElevSum      =   0;  // WILL CALC TIMINGS IN AUTONOMOUS INIT
@@ -215,40 +215,40 @@ class RecycleRushRobot : public IterativeRobot
 
         // Stack Tote Set Drive Speeds
         const float  AM_ST_DRIVE_FWD_X    =  0.0;   // CONFIG
-        const float  AM_ST_DRIVE_FWD_Y    =  0.5;   // CONFIG
+        const float  AM_ST_DRIVE_FWD_Y    =  0.45;  // CONFIG
         const float  AM_ST_DRIVE_FWD_Z    =  0.0;   // CONFIG
         const float  AM_ST_DRIVE_REV_X    =  0.0;   // CONFIG
-        const float  AM_ST_DRIVE_REV_Y    = -0.5;   // CONFIG
+        const float  AM_ST_DRIVE_REV_Y    = -0.45;  // CONFIG
         const float  AM_ST_DRIVE_REV_Z    =  0.0;   // CONFIG
-        const float  AM_ST_DRIVE_LEFT_X   =  0.5;   // CONFIG
+        const float  AM_ST_DRIVE_LEFT_X   =  0.45;  // CONFIG
         const float  AM_ST_DRIVE_LEFT_Y   =  0.0;   // CONFIG
         const float  AM_ST_DRIVE_LEFT_Z   =  0.0;   // CONFIG
-        const float  AM_ST_DRIVE_RIGHT_X  = -0.5;   // CONFIG
+        const float  AM_ST_DRIVE_RIGHT_X  = -0.45;  // CONFIG
         const float  AM_ST_DRIVE_RIGHT_Y  =  0.0;   // CONFIG
         const float  AM_ST_DRIVE_RIGHT_Z  =  0.0;   // CONFIG
         const float  AM_ST_TURN_LEFT_X    =  0.0;   // CONFIG
         const float  AM_ST_TURN_LEFT_Y    =  0.0;   // CONFIG
-        const float  AM_ST_TURN_LEFT_Z    =  0.45;  // CONFIG
+        const float  AM_ST_TURN_LEFT_Z    =  0.4;   // CONFIG
         const float  AM_ST_TURN_RIGHT_X   =  0.0;   // CONFIG
         const float  AM_ST_TURN_RIGHT_Y   =  0.0;   // CONFIG
-        const float  AM_ST_TURN_RIGHT_Z   = -0.45;  // CONFIG
+        const float  AM_ST_TURN_RIGHT_Z   = -0.4;   // CONFIG
         // Stack Tote Set Timing Constants & Variables
-        static const uint   AM_ST_CLOSE_GRABBER_TIME   =   5; // CONFIG
-        static const uint   AM_ST_OPEN_GRABBER_TIME    =   5; // CONFIG
-        static const uint   AM_ST_RAISE_ELEV_TIME      =  20; // CONFIG
-        static const uint   AM_ST_LOWER_ELEV_TIME      =  20; // CONFIG
+        static const uint   AM_ST_CLOSE_GRABBER_TIME   =  10; // CONFIG
+        static const uint   AM_ST_OPEN_GRABBER_TIME    =  10; // CONFIG
+        static const uint   AM_ST_RAISE_ELEV_TIME      =  30; // CONFIG
+        static const uint   AM_ST_LOWER_ELEV_TIME      =  30; // CONFIG
         static const uint   AM_ST1_DRIVE_FWD_TIME      =   5; // CONFIG
         static const uint   AM_ST1_TURN_RIGHT_TIME     =  50; // CONFIG
         static const uint   AM_ST1_DRIVE_LEFT_TIME     =  88; // CONFIG
-        static const uint   AM_ST1_TURN_LEFT_TIME      =  45; // CONFIG
+        static const uint   AM_ST1_TURN_LEFT_TIME      =  50; // CONFIG
         static const uint   AM_ST1_DRIVE_REV_TIME      =   5; // CONFIG
         static const uint   AM_ST2_DRIVE_FWD_TIME      =   5; // CONFIG
         static const uint   AM_ST2_TURN_RIGHT_TIME     =  50; // CONFIG
         static const uint   AM_ST2_DRIVE_LEFT_TIME     =  88; // CONFIG
-        static const uint   AM_ST2_TURN_LEFT_TIME      =  45; // CONFIG
+        static const uint   AM_ST2_TURN_LEFT_TIME      =  50; // CONFIG
         static const uint   AM_ST2_DRIVE_REV_TIME      =   5; // CONFIG
         static const uint   AM_ST3_DRIVE_FWD_TIME      = 100; // CONFIG
-        static const uint   AM_ST3_TURN_LEFT_TIME      =  45; // CONFIG
+        static const uint   AM_ST3_TURN_LEFT_TIME      =  50; // CONFIG
         static const uint   AM_ST3_DRIVE_RIGHT_TIME    =  25; // CONFIG
         // Cumulative Timings - Calculated at run time to make configuration easier
         uint amST1CloseGrabberSum   =   0;  // INITIALIZING TO ZERO HERE
@@ -1258,9 +1258,17 @@ void RecycleRushRobot::RunStackTotes()
 		AMDriveRobot(AM_ST_TURN_LEFT_X,AM_ST_TURN_LEFT_Y,AM_ST_TURN_LEFT_Z);
 	}
 	else
+	if ( loopCount <= amST3LowerElevSum )
+		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
+	else
+	if ( loopCount <= amST3OpenGrabberSum )
+	{
+		pGrabber->OpenGrabber();
+	}
+	else
 	if ( loopCount <= amST3DriveRightSum )
 	{
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
+		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 		AMDriveRobot(AM_ST_DRIVE_RIGHT_X,AM_ST_DRIVE_RIGHT_Y,AM_ST_DRIVE_RIGHT_Z);
 	}
 	else
