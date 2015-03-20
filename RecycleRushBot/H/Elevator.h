@@ -42,7 +42,7 @@ class Elevator
 		const double  DEFAULT_INPUT_LOWER_LIMIT =  0.0;    // CONFIGURE
 		const double  ELEV_POS_UPPER_LIMIT      = 59.1;    // CONFIGURE
 		const double  ELEV_POS_LOWER_LIMIT      =  6.90;   // CONFIGURE
-		const double  TARGET_TOLERANCE          =  0.374;  // CONFIGURE
+		const double  TARGET_TOLERANCE          =  0.375;  // CONFIGURE
 
 		const double  POSITION0_INCREMENT       =  0.75;   // CONFIGURE
 		const double  POSITION1_INCREMENT       = 14.25;   // CONFIGURE
