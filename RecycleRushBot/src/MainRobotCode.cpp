@@ -1064,10 +1064,16 @@ void RecycleRushRobot::RunAutonomousMode()
 void RecycleRushRobot::RunSetRobot()
 {
 	if ( loopCount <= amRSDriveFwdSum )
+	{
+		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 		AMDriveRobot(AM_RS_DRIVE_FWD_X,AM_RS_DRIVE_FWD_Y,AM_RS_DRIVE_FWD_Z);
+	}
 	else
 		if ( loopCount <= amRSTurnSum )
+		{
+			pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 			AMDriveRobot(AM_RS_TURN_LEFT_X, AM_RS_TURN_LEFT_Y, AM_RS_TURN_LEFT_Z);
+		}
 		else
 			autoMode = kAutoModeOff;
 
