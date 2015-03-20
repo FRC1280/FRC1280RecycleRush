@@ -191,10 +191,10 @@ class RecycleRushRobot : public IterativeRobot
         const float  AM_TC_DRIVE_RIGHT_Z  =  0.0;   // CONFIG
         const float  AM_TC_TURN_LEFT_X    =  0.0;   // CONFIG
         const float  AM_TC_TURN_LEFT_Y    =  0.0;   // CONFIG
-        const float  AM_TC_TURN_LEFT_Z    =  0.25;  // CONFIG
+        const float  AM_TC_TURN_LEFT_Z    =  0.3;   // CONFIG
         const float  AM_TC_TURN_RIGHT_X   =  0.0;   // CONFIG
         const float  AM_TC_TURN_RIGHT_Y   =  0.0;   // CONFIG
-        const float  AM_TC_TURN_RIGHT_Z   = -0.25;  // CONFIG
+        const float  AM_TC_TURN_RIGHT_Z   = -0.3;   // CONFIG
         // Tote & Container Set Timing Constants & Variables
         // Incremental timings
         static const uint   AM_TC_CLOSE_GRABBER_TIME  = 100; // CONFIG
