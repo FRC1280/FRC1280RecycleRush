@@ -183,10 +183,10 @@ class RecycleRushRobot : public IterativeRobot
         const float  AM_TC_DRIVE_FWD_X    =  0.0;   // CONFIG
         const float  AM_TC_DRIVE_FWD_Y    =  0.4;   // CONFIG
         const float  AM_TC_DRIVE_FWD_Z    =  0.0;   // CONFIG
-        const float  AM_TC_DRIVE_LEFT_X   =  0.4;  // CONFIG
+        const float  AM_TC_DRIVE_LEFT_X   =  0.4;   // CONFIG
         const float  AM_TC_DRIVE_LEFT_Y   =  0.0;   // CONFIG
         const float  AM_TC_DRIVE_LEFT_Z   =  0.0;   // CONFIG
-        const float  AM_TC_DRIVE_RIGHT_X  = -0.4;  // CONFIG
+        const float  AM_TC_DRIVE_RIGHT_X  = -0.4;   // CONFIG
         const float  AM_TC_DRIVE_RIGHT_Y  =  0.0;   // CONFIG
         const float  AM_TC_DRIVE_RIGHT_Z  =  0.0;   // CONFIG
         const float  AM_TC_TURN_LEFT_X    =  0.0;   // CONFIG
@@ -197,7 +197,7 @@ class RecycleRushRobot : public IterativeRobot
         const float  AM_TC_TURN_RIGHT_Z   = -0.25;  // CONFIG
         // Tote & Container Set Timing Constants & Variables
         // Incremental timings
-        static const uint   AM_TC_CLOSE_GRABBER_TIME  =  50; // CONFIG
+        static const uint   AM_TC_CLOSE_GRABBER_TIME  = 100; // CONFIG
         static const uint   AM_TC_RAISE_ELEV_TIME     =  50; // CONFIG
         static const uint   AM_TC_DRIVE_FWD_TIME      = 120; // CONFIG
         static const uint   AM_TC_TURN_TIME           = 105; // CONFIG
@@ -1082,25 +1082,40 @@ void RecycleRushRobot::RunSetRobot()
 void RecycleRushRobot::RunSetToteLeft()
 {
 	if ( loopCount <= amTCCloseGrabberSum )
+	{
+		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 		pGrabber->CloseGrabber();
+	}
 	else
 		if ( loopCount <= amTCRaiseElevSum )
 			pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
 		else
 			if ( loopCount <= amTCDriveFwdSum )
+			{
+				pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
 				AMDriveRobot(AM_TC_DRIVE_FWD_X,AM_TC_DRIVE_FWD_Y,AM_TC_DRIVE_FWD_Z);
+			}
 			else
 				if (loopCount <= amTCTurnSum )
+				{
+					pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
 					AMDriveRobot(AM_TC_TURN_LEFT_X,AM_TC_TURN_LEFT_Y,AM_TC_TURN_LEFT_Z);
+				}
 				else
 					if ( loopCount <= amTCLowerElevSum )
 						pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 					else
 						if ( loopCount <= amTCOpenGrabberSum )
+						{
+							pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 							pGrabber->OpenGrabber();
+						}
 						else
 							if ( loopCount <= amTCDriveRevSum )
+							{
+								pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 								AMDriveRobot(AM_TC_DRIVE_RIGHT_X,AM_TC_DRIVE_RIGHT_Y,AM_TC_DRIVE_RIGHT_Z);
+							}
 							else
 								autoMode = kAutoModeOff;
 
@@ -1117,25 +1132,40 @@ void RecycleRushRobot::RunSetToteRight()
 {
 	{
 		if ( loopCount <= amTCCloseGrabberSum )
+		{
+			pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 			pGrabber->CloseGrabber();
+		}
 		else
 			if ( loopCount <= amTCRaiseElevSum )
 				pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
 			else
 				if ( loopCount <= amTCDriveFwdSum )
+				{
+					pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
 					AMDriveRobot(AM_TC_DRIVE_FWD_X,AM_TC_DRIVE_FWD_Y,AM_TC_DRIVE_FWD_Z);
+				}
 				else
 					if (loopCount <= amTCTurnSum )
+					{
+						pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
 						AMDriveRobot(AM_TC_TURN_RIGHT_X,AM_TC_TURN_RIGHT_Y,AM_TC_TURN_RIGHT_Z);
+					}
 					else
 						if ( loopCount <= amTCLowerElevSum )
 							pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 						else
 							if ( loopCount <= amTCOpenGrabberSum )
+							{
+								pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 								pGrabber->OpenGrabber();
+							}
 							else
 								if ( loopCount <= amTCDriveRevSum )
+								{
+									pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 									AMDriveRobot(AM_TC_DRIVE_LEFT_X,AM_TC_DRIVE_LEFT_Y,AM_TC_DRIVE_LEFT_Z);
+								}
 								else
 									autoMode = kAutoModeOff;
 
