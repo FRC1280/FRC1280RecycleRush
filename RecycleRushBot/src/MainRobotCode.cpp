@@ -249,8 +249,8 @@ class RecycleRushRobot : public IterativeRobot
         uint amST1OpenGrabberSum    =   0;
         uint amST1LowerElevSum      =   0;
         uint amST2CloseGrabberSum   =   0;
-        uint amST2RaiseElevSum      =   0;
-        uint amST2DriveFwdSum       =   0;
+//      uint amST2RaiseElevSum      =   0;
+//      uint amST2DriveFwdSum       =   0;
 //      uint amST2OpenGrabberSum    =   0;
 //      uint amST2LowerElevSum      =   0;
 //      uint amST3CloseGrabberSum   =   0;
@@ -930,7 +930,7 @@ void RecycleRushRobot::CalcAutoModeTimings()
 //  amST2OpenGrabberSum    =   amST2DriveFwdSum     + AM_ST_OPEN_GRABBER_TIME;
 //  amST2LowerElevSum      =   amST2OpenGrabberSum  + AM_ST_LOWER_ELEV_TIME;
 //  amST3CloseGrabberSum   =   amST2LowerElevSum    + AM_ST_CLOSE_GRABBER_TIME;
-    amST3TurnRightSum      =   amST2DriveFwdSum     + AM_ST3_TURN_RIGHT_TIME;
+    amST3TurnRightSum      =   amST2CloseGrabberSum + AM_ST3_TURN_RIGHT_TIME;
 //  amST3TurnRightSum      =   amST3CloseGrabberSum + AM_ST3_TURN_RIGHT_TIME;
     amST3DriveRightSum     =   amST3TurnRightSum    + AM_ST3_DRIVE_RIGHT_TIME;
     amST3OpenGrabberSum    =   amST3DriveRightSum   + AM_ST_OPEN_GRABBER_TIME;
