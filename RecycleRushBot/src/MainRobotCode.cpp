@@ -9,11 +9,10 @@
 #include "../H/CameraLights.h"
 #include "../H/Grabber.h"
 #include "../H/Elevator.h"
-#include "../H/Vision.h"
 #include "../H/IMU.h"
 #include "../H/IMUAdvanced.h"
 
-#define CONSOLE
+//#define CONSOLE
 //#define VISION
 
 //------------------------------------------------------------------------------
@@ -191,10 +190,10 @@ class RecycleRushRobot : public IterativeRobot
         const float  AM_TC_DRIVE_RIGHT_Z  =  0.0;   // CONFIG
         const float  AM_TC_TURN_LEFT_X    =  0.0;   // CONFIG
         const float  AM_TC_TURN_LEFT_Y    =  0.0;   // CONFIG
-        const float  AM_TC_TURN_LEFT_Z    =  0.3;   // CONFIG
+        const float  AM_TC_TURN_LEFT_Z    =  0.25;  // CONFIG
         const float  AM_TC_TURN_RIGHT_X   =  0.0;   // CONFIG
         const float  AM_TC_TURN_RIGHT_Y   =  0.0;   // CONFIG
-        const float  AM_TC_TURN_RIGHT_Z   = -0.3;   // CONFIG
+        const float  AM_TC_TURN_RIGHT_Z   = -0.25;  // CONFIG
         // Tote & Container Set Timing Constants & Variables
         // Incremental timings
         static const uint   AM_TC_CLOSE_GRABBER_TIME  = 100; // CONFIG
@@ -233,49 +232,32 @@ class RecycleRushRobot : public IterativeRobot
         const float  AM_ST_TURN_RIGHT_Y   =  0.0;   // CONFIG
         const float  AM_ST_TURN_RIGHT_Z   = -0.4;   // CONFIG
         // Stack Tote Set Timing Constants & Variables
-        static const uint   AM_ST_CLOSE_GRABBER_TIME   =  10; // CONFIG
-        static const uint   AM_ST_OPEN_GRABBER_TIME    =  10; // CONFIG
-        static const uint   AM_ST_RAISE_ELEV_TIME      =  30; // CONFIG
-        static const uint   AM_ST_LOWER_ELEV_TIME      =  30; // CONFIG
-        static const uint   AM_ST1_DRIVE_FWD_TIME      =   5; // CONFIG
-        static const uint   AM_ST1_TURN_RIGHT_TIME     =  50; // CONFIG
-        static const uint   AM_ST1_DRIVE_LEFT_TIME     =  88; // CONFIG
-        static const uint   AM_ST1_TURN_LEFT_TIME      =  50; // CONFIG
-        static const uint   AM_ST1_DRIVE_REV_TIME      =   5; // CONFIG
-        static const uint   AM_ST2_DRIVE_FWD_TIME      =   5; // CONFIG
-        static const uint   AM_ST2_TURN_RIGHT_TIME     =  50; // CONFIG
-        static const uint   AM_ST2_DRIVE_LEFT_TIME     =  88; // CONFIG
-        static const uint   AM_ST2_TURN_LEFT_TIME      =  50; // CONFIG
-        static const uint   AM_ST2_DRIVE_REV_TIME      =   5; // CONFIG
-        static const uint   AM_ST3_DRIVE_FWD_TIME      = 100; // CONFIG
-        static const uint   AM_ST3_TURN_LEFT_TIME      =  50; // CONFIG
-        static const uint   AM_ST3_DRIVE_RIGHT_TIME    =  25; // CONFIG
+        static const uint   AM_ST_CLOSE_GRABBER_TIME   =  50; // CONFIG
+        static const uint   AM_ST_OPEN_GRABBER_TIME    =  50; // CONFIG
+        static const uint   AM_ST_RAISE_ELEV_TIME      =   0; // CONFIG
+        static const uint   AM_ST_LOWER_ELEV_TIME      =  50; // CONFIG
+        static const uint   AM_ST1_DRIVE_FWD_TIME      = 100; // CONFIG
+//      static const uint   AM_ST2_DRIVE_FWD_TIME      =   0; // CONFIG
+//      static const uint   AM_ST2_DRIVE_FWD_TIME      = 100; // CONFIG
+        static const uint   AM_ST3_TURN_RIGHT_TIME     =  50; // CONFIG
+        static const uint   AM_ST3_DRIVE_RIGHT_TIME    = 120; // CONFIG
+        static const uint   AM_ST3_DRIVE_LEFT_TIME     =  25; // CONFIG
         // Cumulative Timings - Calculated at run time to make configuration easier
         uint amST1CloseGrabberSum   =   0;  // INITIALIZING TO ZERO HERE
         uint amST1RaiseElevSum      =   0;  // WILL CALC TIMINGS IN AUTONOMOUS INIT
         uint amST1DriveFwdSum       =   0;
-        uint amST1TurnRightSum      =   0;
-        uint amST1DriveLeftSum      =   0;
-        uint amST1TurnLeftSum       =   0;
-        uint amST1DriveRevSum       =   0;
         uint amST1OpenGrabberSum    =   0;
         uint amST1LowerElevSum      =   0;
         uint amST2CloseGrabberSum   =   0;
         uint amST2RaiseElevSum      =   0;
         uint amST2DriveFwdSum       =   0;
-        uint amST2TurnRightSum      =   0;
-        uint amST2DriveLeftSum      =   0;
-        uint amST2TurnLeftSum       =   0;
-        uint amST2DriveRevSum       =   0;
-        uint amST2OpenGrabberSum    =   0;
-        uint amST2LowerElevSum      =   0;
-        uint amST3CloseGrabberSum   =   0;
-        uint amST3RaiseElevSum      =   0;
-        uint amST3DriveFwdSum       =   0;
-        uint amST3TurnLeftSum       =   0;
-        uint amST3LowerElevSum      =   0;
-        uint amST3OpenGrabberSum    =   0;
+//      uint amST2OpenGrabberSum    =   0;
+//      uint amST2LowerElevSum      =   0;
+//      uint amST3CloseGrabberSum   =   0;
+        uint amST3TurnRightSum      =   0;
         uint amST3DriveRightSum     =   0;
+        uint amST3OpenGrabberSum    =   0;
+        uint amST3DriveLeftSum      =   0;
 
         //----------------------------------------------------------------------
 		// AUTONOMOUS MODE ROBOT STATE & TIMING TRACKING
@@ -940,28 +922,19 @@ void RecycleRushRobot::CalcAutoModeTimings()
     amST1CloseGrabberSum   =   AM_ST_CLOSE_GRABBER_TIME;
     amST1RaiseElevSum      =   amST1CloseGrabberSum + AM_ST_RAISE_ELEV_TIME;
     amST1DriveFwdSum       =   amST1RaiseElevSum    + AM_ST1_DRIVE_FWD_TIME;
-    amST1TurnRightSum      =   amST1DriveFwdSum     + AM_ST1_TURN_RIGHT_TIME;
-    amST1DriveLeftSum      =   amST1TurnRightSum    + AM_ST1_DRIVE_LEFT_TIME;
-    amST1TurnLeftSum       =   amST1DriveLeftSum    + AM_ST1_TURN_LEFT_TIME;
-    amST1DriveRevSum       =   amST1TurnLeftSum     + AM_ST1_DRIVE_REV_TIME;
-    amST1OpenGrabberSum    =   amST1DriveRevSum     + AM_ST_OPEN_GRABBER_TIME;
+    amST1OpenGrabberSum    =   amST1DriveFwdSum     + AM_ST_OPEN_GRABBER_TIME;
     amST1LowerElevSum      =   amST1OpenGrabberSum  + AM_ST_LOWER_ELEV_TIME;
     amST2CloseGrabberSum   =   amST1LowerElevSum    + AM_ST_CLOSE_GRABBER_TIME;
-    amST2RaiseElevSum      =   amST2CloseGrabberSum + AM_ST_RAISE_ELEV_TIME;
-    amST2DriveFwdSum       =   amST2RaiseElevSum    + AM_ST2_DRIVE_FWD_TIME;
-    amST2TurnRightSum      =   amST2DriveFwdSum     + AM_ST2_TURN_RIGHT_TIME;
-    amST2DriveLeftSum      =   amST2TurnRightSum    + AM_ST2_DRIVE_LEFT_TIME;
-    amST2TurnLeftSum       =   amST2DriveLeftSum    + AM_ST2_TURN_LEFT_TIME;
-    amST2DriveRevSum       =   amST2TurnLeftSum     + AM_ST2_DRIVE_REV_TIME;
-    amST2OpenGrabberSum    =   amST2DriveRevSum     + AM_ST_OPEN_GRABBER_TIME;
-    amST2LowerElevSum      =   amST2OpenGrabberSum  + AM_ST_LOWER_ELEV_TIME;
-    amST3CloseGrabberSum   =   amST2LowerElevSum    + AM_ST_CLOSE_GRABBER_TIME;
-    amST3RaiseElevSum      =   amST3CloseGrabberSum + AM_ST_RAISE_ELEV_TIME;
-    amST3DriveFwdSum       =   amST3RaiseElevSum    + AM_ST3_DRIVE_FWD_TIME;
-    amST3TurnLeftSum       =   amST3DriveFwdSum     + AM_ST3_TURN_LEFT_TIME;
-    amST3LowerElevSum      =   amST3TurnLeftSum     + AM_ST_LOWER_ELEV_TIME;
-    amST3OpenGrabberSum    =   amST3LowerElevSum    + AM_ST_OPEN_GRABBER_TIME;
-    amST3DriveRightSum     =   amST3OpenGrabberSum  + AM_ST3_DRIVE_RIGHT_TIME;
+//  amST2RaiseElevSum      =   amST2CloseGrabberSum + AM_ST_RAISE_ELEV_TIME;
+//  amST2DriveFwdSum       =   amST2RaiseElevSum    + AM_ST2_DRIVE_FWD_TIME;
+//  amST2OpenGrabberSum    =   amST2DriveFwdSum     + AM_ST_OPEN_GRABBER_TIME;
+//  amST2LowerElevSum      =   amST2OpenGrabberSum  + AM_ST_LOWER_ELEV_TIME;
+//  amST3CloseGrabberSum   =   amST2LowerElevSum    + AM_ST_CLOSE_GRABBER_TIME;
+    amST3TurnRightSum      =   amST2DriveFwdSum     + AM_ST3_TURN_RIGHT_TIME;
+//  amST3TurnRightSum      =   amST3CloseGrabberSum + AM_ST3_TURN_RIGHT_TIME;
+    amST3DriveRightSum     =   amST3TurnRightSum    + AM_ST3_DRIVE_RIGHT_TIME;
+    amST3OpenGrabberSum    =   amST3DriveRightSum   + AM_ST_OPEN_GRABBER_TIME;
+    amST3DriveLeftSum      =   amST3OpenGrabberSum  + AM_ST3_DRIVE_LEFT_TIME;
 
 	return;
 }
@@ -1187,7 +1160,10 @@ void RecycleRushRobot::RunSetToteRight()
 void RecycleRushRobot::RunStackTotes()
 {
 	if ( loopCount <= amST1CloseGrabberSum )
+	{
+		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 		pGrabber->CloseGrabber();
+	}
 	else
 	if ( loopCount <= amST1RaiseElevSum )
 		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
@@ -1196,30 +1172,6 @@ void RecycleRushRobot::RunStackTotes()
 	{
 		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
 		AMDriveRobot(AM_ST_DRIVE_FWD_X,AM_ST_DRIVE_FWD_Y,AM_ST_DRIVE_FWD_Z);
-	}
-	else
-	if ( loopCount <= amST1TurnRightSum )
-	{
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
-		AMDriveRobot(AM_ST_TURN_RIGHT_X,AM_ST_TURN_RIGHT_Y,AM_ST_TURN_RIGHT_Z);
-	}
-	else
-	if ( loopCount<= amST1DriveLeftSum )
-	{
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
-		AMDriveRobot(AM_ST_DRIVE_LEFT_X,AM_ST_DRIVE_LEFT_Y,AM_ST_DRIVE_LEFT_Z);
-	}
-	else
-	if ( loopCount<= amST1TurnLeftSum )
-	{
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
-		AMDriveRobot(AM_ST_TURN_LEFT_X,AM_ST_TURN_LEFT_Y,AM_ST_TURN_LEFT_Z);
-	}
-	else
-	if ( loopCount<= amST1DriveRevSum )
-	{
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
-		AMDriveRobot(AM_ST_DRIVE_REV_X,AM_ST_DRIVE_REV_Y,AM_ST_DRIVE_REV_Z);
 	}
 	else
 	if ( loopCount <= amST1OpenGrabberSum )
@@ -1232,39 +1184,18 @@ void RecycleRushRobot::RunStackTotes()
 		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 	else
 	if ( loopCount <= amST2CloseGrabberSum )
+	{
+		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 		pGrabber->CloseGrabber();
+	}
 	else
-	if ( loopCount <= amST2RaiseElevSum )
+/*	if ( loopCount <= amST2RaiseElevSum )
 		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
 	else
 	if ( loopCount <= amST2DriveFwdSum )
 	{
 		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
 		AMDriveRobot(AM_ST_DRIVE_FWD_X,AM_ST_DRIVE_FWD_Y,AM_ST_DRIVE_FWD_Z);
-	}
-	else
-	if ( loopCount <= amST2TurnRightSum )
-	{
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
-		AMDriveRobot(AM_ST_TURN_RIGHT_X,AM_ST_TURN_RIGHT_Y,AM_ST_TURN_RIGHT_Z);
-	}
-	else
-	if ( loopCount<= amST2DriveLeftSum )
-	{
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
-		AMDriveRobot(AM_ST_DRIVE_LEFT_X,AM_ST_DRIVE_LEFT_Y,AM_ST_DRIVE_LEFT_Z);
-	}
-	else
-	if ( loopCount<= amST2TurnLeftSum )
-	{
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
-		AMDriveRobot(AM_ST_TURN_LEFT_X,AM_ST_TURN_LEFT_Y,AM_ST_TURN_LEFT_Z);
-	}
-	else
-	if ( loopCount<= amST2DriveRevSum )
-	{
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
-		AMDriveRobot(AM_ST_DRIVE_REV_X,AM_ST_DRIVE_REV_Y,AM_ST_DRIVE_REV_Z);
 	}
 	else
 	if ( loopCount <= amST2OpenGrabberSum )
@@ -1277,35 +1208,34 @@ void RecycleRushRobot::RunStackTotes()
 		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 	else
 	if ( loopCount <= amST3CloseGrabberSum )
-		pGrabber->CloseGrabber();
-	else
-	if ( loopCount <= amST3RaiseElevSum )
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
-	else
-	if ( loopCount <= amST3DriveFwdSum )
 	{
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
-		AMDriveRobot(AM_ST_DRIVE_FWD_X,AM_ST_DRIVE_FWD_Y,AM_ST_DRIVE_FWD_Z);
-	}
-	else
-	if ( loopCount <= amST3TurnLeftSum )
-	{
-		pElevator->MoveElevator(Elevator::kPosition1,Elevator::kGround);
-		AMDriveRobot(AM_ST_TURN_LEFT_X,AM_ST_TURN_LEFT_Y,AM_ST_TURN_LEFT_Z);
-	}
-	else
-	if ( loopCount <= amST3LowerElevSum )
 		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
+		pGrabber->CloseGrabber();
+	}
 	else
-	if ( loopCount <= amST3OpenGrabberSum )
+*/
+	if ( loopCount <= amST3TurnRightSum )
 	{
-		pGrabber->OpenGrabber();
+		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
+		AMDriveRobot(AM_ST_TURN_RIGHT_X,AM_ST_TURN_RIGHT_Y,AM_ST_TURN_RIGHT_Z);
 	}
 	else
 	if ( loopCount <= amST3DriveRightSum )
 	{
 		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 		AMDriveRobot(AM_ST_DRIVE_RIGHT_X,AM_ST_DRIVE_RIGHT_Y,AM_ST_DRIVE_RIGHT_Z);
+	}
+	else
+	if ( loopCount <= amST3OpenGrabberSum )
+	{
+		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
+		pGrabber->OpenGrabber();
+	}
+	else
+	if ( loopCount <= amST3DriveLeftSum )
+	{
+		pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
+		AMDriveRobot(AM_ST_DRIVE_LEFT_X,AM_ST_DRIVE_LEFT_Y,AM_ST_DRIVE_LEFT_Z);
 	}
 	else
 		autoMode = kAutoModeOff;
