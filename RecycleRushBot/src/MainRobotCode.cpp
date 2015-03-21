@@ -173,6 +173,7 @@ class RecycleRushRobot : public IterativeRobot
         // Robot Set Timing Constants & Variables
         // Incremental Timings
         static const uint   AM_RS_DRIVE_FWD_TIME  = 100;  // CONFIG
+//      static const uint   AM_RS_DRIVE_FWD_TIME  =  65;  // CONFIG
         static const uint   AM_RS_TURN_TIME       =  45;  // CONFIG
         // Cumulative Timings - Calculated at run time to make configuration easier
         uint amRSDriveFwdSum  =   0;  // INITIALIZING TO ZERO HERE
