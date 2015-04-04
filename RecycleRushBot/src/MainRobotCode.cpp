@@ -1004,6 +1004,7 @@ void RecycleRushRobot::RunAutonomousMode()
 	switch ( autoMode )
 	{
 		case kAutoModeOff:
+			pElevator->MoveElevator(Elevator::kPosition0,Elevator::kGround);
 			AMDriveRobot(AM_STOP_ROBOT_X,AM_STOP_ROBOT_Y,AM_STOP_ROBOT_Z);
 			break;
 
